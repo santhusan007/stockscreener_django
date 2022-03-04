@@ -1,0 +1,118 @@
+{% extends "stocks/base.html" %}
+{% load tailwind_filters %}
+
+{% block content %}
+
+<style>
+  table {
+    border-collapse: separate;
+    border-spacing: .2em;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  td {
+
+    text-align: center;
+    border-radius: 8px;
+    width: 100px;
+    margin: 2px;
+    text-align: center;
+    line-height: 20px;
+    font-size: 13px;
+    border-radius: 8px;
+    color: black;
+
+  }
+</style>
+<h2> Map of {{sectorstock.sector}} stocks for Period Daily By Price Change % </h2>
+<table>
+  
+  {% for stock in stocksectorprice %}
+  <tbody>
+    <tr>
+  {% if stock.per_chan < -4 %} 
+  
+    
+      <td style="background-color: #FF0000;">
+        <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}"><b>{{stock.stock.symbol}}</a></b><br>
+        <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
+      </td>
+
+
+      {% elif stock.per_chan < -3 %} <td style="background-color: #FF6400;">
+        <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}"><b>{{stock.stock.symbol}}</a></b><br>
+        <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br></td>
+
+        {% elif stock.per_chan < -2 %} <td style="background-color: #FF9664;;">
+          <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}"><b>{{stock.stock.symbol}}</a></b><br>
+          <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br></td>
+
+          {% elif stock.per_chan < -1 %} <td style="background-color:  #FFC896;">
+            <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}"><b>{{stock.stock.symbol}}</a></b><br>
+            <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br></td>
+
+            {% elif stock.per_chan < 0 %} <td style="background-color: #FFE1AF;;">
+              <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}"><b>{{stock.stock.symbol}}</a></b><br>
+              <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br></td>
+
+              {% elif stock.per_chan > 4 %}
+
+              <td style="background-color: #385724;;">
+                <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}"><b>{{stock.stock.symbol}}</a></b><br>
+                <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
+              </td>
+
+              {% elif stock.per_chan > 3 %}
+
+              <td style="background-color: #548235;">
+                <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}"><b>{{stock.stock.symbol}}</a></b><br>
+                <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
+              </td>
+
+              {% elif stock.per_chan > 2 %}
+
+              <td style="background-color: #A9D18E;;">
+                <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}"><b>{{stock.stock.symbol}}</a></b><br>
+                <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
+              </td>
+
+              {% elif stock.per_chan > 1 %}
+
+              <td style="background-color: #C5E0B4;;">
+                <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}"><b>{{stock.stock.symbol}}</a></b><br>
+                <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
+              </td>
+
+              {% elif stock.per_chan > 0 %}
+
+              <td style="background-color: #E2F0D9;;">
+                <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}"><b>{{stock.stock.symbol}}</a></b><br>
+                <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
+              </td>
+
+              {% elif stock.per_chan == 0 %}
+
+              <td style="background-color: #E2F0D9;;">
+                <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}"><b>{{stock.stock.symbol}}</a></b><br>
+                <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
+              </td>
+    </tr>
+
+    {% endif %}
+
+
+    {% endfor %}
+
+    </tbody>
+
+
+</table>
+
+
+
+
+
+
+
+{% endblock %}

@@ -1,0 +1,107 @@
+{% load static %}
+{% load static tailwind_tags %}
+
+<html>
+
+<head>
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<title>Stock Screener</title>
+	
+	 
+	<!--link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet"-->
+	
+	
+	<link id="favicon" rel="icon" type="image/x-icon" href="static/images/favicon.ico">
+	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+	<!--link rel="stylesheet" type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.0/css/jquery.dataTables.css">
+   <link rel="stylesheet" type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.0/css/jquery.dataTables_themeroller.css">
+   <script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.1.min.js"></script>
+   <script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.0/jquery.dataTables.min.js"></script-->
+	<!--link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.css"-->
+  	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.js"></script>
+	<link rel="stylesheet" href="{% static 'css/main.css' %}" rel="stylesheet">
+   <link rel="stylesheet" href="{% static 'css/datatables.min.css' %}" rel="stylesheet">
+   <script src="{% static 'js/main.js' %}"></script>
+   <script src="{% static 'js/datatables.min.js' %}"></script>
+   <script src="{% static 'js/jquery-3.6.0.js' %}"></script>
+   <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+   <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp"
+	rel="stylesheet">
+
+
+  
+   {% tailwind_css %}
+		
+	
+</head>
+<body>
+	{% include 'stocks/navbar.html' %}
+	<marquee behavior="scroll" direction="left" style="color:green;"> <b>
+			{% for rate in dollar_rate %}
+			USD:-{{dollar_rate.rate}}
+			{% endfor %}
+			{% for rate in copper_rate %}
+			LME Cu:-{{copper_rate.rate}}
+			{% endfor %}
+			{% for sector in broders %}
+			{% if sector.indices == "Nifty 50" %}
+			Nifty:-{{sector.close}}
+			{% endif %}
+			{% endfor %}
+		</b>
+	</marquee>
+	<div class= "ui container">
+	{% block button_header %}
+
+
+	{% for broder  in broders  %}
+
+
+<a class="text-white" href="{% url 'stocks:index-heatmap' broder.indices %}" target="_blank">
+  <button class="w-30  float-none bg-blue-500 text-white hover:bg-blue-600 my-1 px-1 py-1 rounded-lg" >
+  {{broder.indices}}</a>	</button>
+  
+{% endfor %}
+
+{% for sector  in sector_index  %}
+<a class="text-white" href="{% url 'stocks:sector-heatmap' sector.sector %}" target="_blank">
+  <button class="w-30  float-none bg-blue-500 text-white hover:bg-blue-600 my-1 px-1 py-1 rounded-lg" >
+  {{sector.sector}}</a>	</button>
+  
+{% endfor %}
+
+{% for sec in sectors %}
+	<a class="text-white" href="{% url 'stocks:stock-heatmap' sec.sector %}" target="_blank">
+	  <button class="w-30  float-none bg-blue-500 text-white hover:bg-blue-600 my-1 px-1 py-1 rounded-lg" >
+		{{sec.sector}}</a>
+
+	</button>
+
+	{% endfor %}
+
+	{% endblock button_header %} 
+
+	
+
+	
+	
+		{% block content %}
+		{% endblock content %}
+	</div>
+
+
+	<footer>
+		<p> DATOMATION , Copyright &copy; 2021
+		</p>
+
+	</footer>
+
+</body>
+
+</html>
+
+
+

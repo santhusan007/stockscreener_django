@@ -1,0 +1,79 @@
+{% extends "stocks/base.html" %}
+{% load tailwind_filters %}
+
+{% block content %}
+
+
+  <h2> <a href="{% url 'stocks:index-sector' %}"> {{main_index.indices}} </a></h2> 
+
+
+
+
+
+        <table class="min-w-full">
+          <thead class="border-b">
+                    
+            
+            <tr>
+              
+              <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                Date
+              </th>
+              <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                Open
+              </th>
+              <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                High
+              </th>
+              <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                Low
+              </th>
+		<th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                Close
+              </th>
+
+			</th>
+		<th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                Volume
+              </th>
+              </tr>
+              </thead>
+              
+        {% for stock in index_price %}
+        <tbody>
+          <tr class="border-b">
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{stock.date}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{stock.open}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{stock.high}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{stock.low}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{stock.close}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{stock.volume}}</td>
+              
+               
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+ 
+
+    <div class="pagination">
+      <span class="step-links">
+        {% if page_obj.has_previous %}
+        <a href="?page=1">&laquo; first</a>
+        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+    
+        <span class="current">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+    
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+      </span>
+    </div>
+
+{% endblock %}

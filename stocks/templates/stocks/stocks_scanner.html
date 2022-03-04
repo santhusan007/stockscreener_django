@@ -1,0 +1,96 @@
+
+{% extends "stocks/base.html" %}
+{% load tailwind_filters %}
+
+{% block content %}
+
+
+<div id="container" style="width:100%";class="mx-auto px-10 py-10">
+    <div id="left" style="float:left; width:50%;">
+    <div class="max-w-lg w-full ">
+   
+    <form action="" method="POST">
+        {% csrf_token %}
+        {{form|crispy}}
+        
+        <button type="submit" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">submit </button>
+        
+    </form>
+
+
+</div>
+
+</div>
+<div id="right" style="float:right; width:50%";class=" px-10 py-10">
+    <form method="get">
+    <input class="mt-6 rounded-lg " type="text" id="myInput" 
+        onkeyup="myFunction()" placeholder="Search for stock names.." title="Type in a name">
+        </form>
+     
+        </div>
+    
+   </div>
+
+  <div>
+
+        
+    <table  class="ui celled table display" cellspacing="0" width="75%"  id="myTable1">
+        <thead>
+            <tr>
+                
+                <th>Symbol</th>
+                <th>Pattern</th>
+
+
+            </tr>
+        </thead>
+        
+        {% for k,v in stocks.items %}
+    
+        {% if v %}
+        <tbody>
+            <tr>
+          
+        
+        <td>
+            <a href="{% url 'stocks:stock-detail' k %}"> {{ k }}</a>
+        </td>
+        <td class="{{ v }}">
+            {{ v }}
+        </td>
+
+    </tr>
+        {% endif %}
+      {% endfor %}
+
+    </tbody>
+</table>
+
+<script>  
+    function myFunction() {
+            var input, filter, table, tr, td, i;
+              input = document.getElementById("myInput");
+              filter = input.value.toUpperCase();
+              table = document.getElementById("myTable1");
+              tr = table.getElementsByTagName("tr");
+              for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[0]; // for column one
+                 td1 = tr[i].getElementsByTagName("td")[1]; // for column two
+            /* ADD columns here that you want you to filter to be used on */
+                if (td) {
+                  if ( (td.innerHTML.toUpperCase().indexOf(filter) > -1) || (td1.innerHTML.toUpperCase().indexOf(filter) > -1) )  {            
+                    tr[i].style.display = "";
+                  } else {
+                    tr[i].style.display = "none";
+                  }
+                }
+              }
+            } 
+                        
+</script>
+
+
+
+{% endblock %}    
+
+

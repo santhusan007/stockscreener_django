@@ -1,0 +1,202 @@
+
+html,body{ 
+		height: 100% ;		
+		font-family: arial;
+}
+
+td{ 
+		padding: 5px;
+	
+}
+.bullish{
+		 background: green;
+		  color: white;
+		
+}
+.bearish{ 
+		background: red;
+		 color: white;
+		
+}	
+#main-header{
+		background-color: #e8491d;
+		color: #fff;text-align:
+		 center;height: 50px;
+		 
+		
+}
+#navbar{
+	
+	background-color: gray;
+	color: #fff; 
+	height: 50px;
+	cursor: pointer;
+	position: sticky;
+	top: 0px;
+	
+
+}
+
+#navbar ul{	
+	
+	padding: 0;	
+	list-style: none;
+
+}
+#navbar li{
+		display: inline;
+}	
+
+.right_side{
+	float: right;
+	margin-left: 20px;
+}
+#navbar a{
+		color: #fff;	
+		text-decoration: none;	
+		font-size: 18 px;	
+		padding-right: 15px;
+	
+}
+#navbar a:hover{
+	color: red;
+}	
+
+
+#myInput {
+	
+	width: 70%;
+	font-size: 16px;
+	padding: 12px 20px 12px 40px;
+	border: 1px solid #ddd;
+	margin-bottom: 12px;
+}
+
+.up{
+	color: green;
+	
+}
+
+.down{
+	color: red;
+	
+}
+
+
+.container{
+	 min-height: 100%;	
+	 width: 90%;
+	 margin: auto;
+	 overflow: hidden;
+}
+	
+	
+aside #sidebar{	float: right;	
+	width: 30%;	
+	margin-top: 15px;
+	padding: 10px;
+}
+.dark{
+	padding: 8px;
+	background: #35424a;
+	color: #ffffff;
+	margin-top: 10px;	
+	margin-bottom: 10px;
+}
+
+.btn_index{
+
+	float: right;
+	margin-top:0;
+	margin-left:100px;
+}
+
+
+.grid-container {
+	  display: grid;
+	  grid-template-columns: auto auto ;
+	  background-color:white;
+	  padding: 10px;
+	}
+.grid-item {
+	  background-color: rgba(255, 255, 255, 0.8);
+	  border: 1px solid rgba(0, 0, 0, 0.8);
+	  padding: 20px;
+	  font-size: 20px;
+	  text-align: center;
+	  text-decoration: none;
+}
+
+
+
+#heatmap li{
+	display: inline;
+}
+
+#results_table table{
+
+	border-collapse: separate; 
+	border-spacing: .2em;
+}
+
+#results_table td{
+	  text-align: center; 
+	  border-radius: 8px;
+}
+
+
+.flex-container {
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction:column;
+	background-color: white
+}
+
+.flex-container > div {
+	
+		width: 100px;
+		margin: 2px;
+		text-align: center;
+		line-height: 20px;
+		font-size: 13px;
+		border-radius: 8px;
+		color: black;
+	
+	
+}
+
+
+#heatmap td{
+
+	width: 100px;
+		margin: 2px;
+		text-align: center;
+		line-height: 20px;
+		font-size: 13px;
+		border-radius: 8px;
+		color: black;
+
+}
+
+
+
+	
+/*footer{	padding:20px;margin-top:20px;color:#ffffff;position:absolute;width:100%;bottom:0;background-color:#e8491d;	text-align: center;}*/
+footer{
+		bottom: 0;
+		height: 2em;
+		padding:20px;
+		margin-top:20px;
+		left: 0;
+		
+		font-size: small;
+		width:100%;
+		color:#ffffff;
+		background-color:#e8491d;
+		text-align: center;
+		position: static;
+}
+	 
+
+
+

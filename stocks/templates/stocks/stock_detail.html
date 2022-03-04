@@ -1,0 +1,125 @@
+{% extends "stocks/base.html" %}
+{% load tailwind_filters %}
+
+{% block content %}
+
+
+  <h2> <a href="{% url 'stocks:stock-list' %}"> {{stock.company}} </a></h2> 
+
+
+<div>
+
+<!-- TradingView Widget BEGIN -->
+<div class="w-full">
+<div class="tradingview-widget-container float-left w-3/5"  >
+    <div id="tradingview_af1e2 "></div>
+
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script type="text/javascript">
+        new TradingView.widget(
+            {
+                "width": 700,
+                "height": 400,
+                "symbol": "BSE:{{stock.symbol}}",
+                "interval": "D",
+                "timezone": "Etc/UTC",
+                "theme": "light",
+                "style": "1",
+                "locale": "en",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": true,
+                "allow_symbol_change": true,
+                "container_id": "tradingview_af1e2"
+            }
+        );
+    </script>
+</div>
+<!-- TradingView Widget BEGIN -->
+<div class="tradingview-widget-container float-right w-2/5"  >
+    <div class="tradingview-widget-container__widget"></div>
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+    {
+    "interval": "1D",
+    "width": 425,
+    "isTransparent": false,
+    "height": 400,
+    "symbol": "NSE:{{stock.symbol}}",
+    "showIntervalTabs": true,
+    "locale": "en",
+    "colorTheme": "light"
+  }
+    </script>
+  </div>
+  <!-- TradingView Widget END -->
+
+</div>
+
+<!-- TradingView Widget END -->
+
+        <table class="min-w-full">
+          <thead class="border-b">
+                    
+            
+            <tr>
+              
+              <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                Date
+              </th>
+              <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                Open
+              </th>
+              <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                High
+              </th>
+              <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                Low
+              </th>
+		<th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                Close
+              </th>
+
+			</th>
+		<th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                Volume
+              </th>
+              </tr>
+              </thead>
+              
+        {% for stock in page_obj %}
+        <tbody>
+          <tr class="border-b">
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{stock.date}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{stock.open}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{stock.high}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{stock.low}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{stock.close}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{stock.volume}}</td>
+              
+               
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+ 
+
+    <div class="pagination">
+      <span class="step-links">
+        {% if page_obj.has_previous %}
+        <a href="?page=1">&laquo; first</a>
+        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+    
+        <span class="current">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+    
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+      </span>
+    </div>
+
+{% endblock %}
