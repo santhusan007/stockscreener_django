@@ -18,4 +18,3 @@ A few screen shots are as below ,
 ![Return over long period](https://user-images.githubusercontent.com/85547411/156754126-20a22ac8-e84c-4224-b47a-01ebc097f8b9.png)
 # Sector wise daily movement..
 ![sectorwise](https://user-images.githubusercontent.com/85547411/156754135-53bcda13-4ca1-4e1f-90e5-41214af487d3.png)
-
