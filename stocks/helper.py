@@ -5,6 +5,10 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import register_adapter, AsIs
 import pandas as pd
+from .models import BroaderIndex,IndexPrice
+from datetime import timedelta
+from django.db.models.functions import Lag, Round
+from django.db.models import F, Window, Q
 
 
 
@@ -95,6 +99,39 @@ def stock_df(symbol):
     # stock_df["low"] = stock_df["low"].astype(float)
     # stock_df["close"] = stock_df["close"].astype(float)
     # # stock_df["volume"] = stock_df["volume"].astype(float)
+latest_day = present_day()
+last_day = prev_day(latest_day)
 
+def perodical_index(index,stocks,stockprice,indices,days,offset):
+    date = latest_day-timedelta(days=days)
+    indexstock = index.objects.filter(indices=indices).first()
+    indexcount = stocks.objects.filter(broder_id=indexstock.id).count()
+    indexstocks = stockprice.objects.all().select_related('stock')
+    stocksectorprice = indexstocks.annotate(prev_close=Window(expression=Lag('close', offset=offset), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+        .annotate(diff=F('close')-F('prev_close'))\
+        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
+        .filter(date__gte=date)\
+        .filter(stock__broder_id=indexstock.id)\
+        .order_by('-date', '-per_chan')[:indexcount]
+    return date,indexstock,indexcount, indexstocks,stocksectorprice
+
+def perodical_sector(index,stocks,stockprice,sec):
+    sectorstock = index.objects.filter(sector=sec).first()
+    sectorcount = stocks.objects.filter(sector=sectorstock.id).count()
+    sectorstocks = stockprice.objects.all().select_related('stock')
+    stocksectorprice =  sectorstocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+        .annotate(diff=F('close')-F('prev_close'))\
+        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
+        .filter(date__gte=last_day)\
+        .filter(stock__sector_id=sectorstock.id)\
+        .order_by('-date', '-per_chan')[:sectorcount]
+    return sectorcount,sectorstock,stocksectorprice
     
-    
+def stocklist_sectorial(stocks,number):
+    mystocks = stocks.objects.all().select_related('stock')
+    qs=mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+            .annotate(diff=F('close')-F('prev_close'))\
+            .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
+            .filter(stock__sectorial_index_id=number)\
+            .filter(date__gte=last_day)
+    return qs

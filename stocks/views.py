@@ -13,6 +13,7 @@ from .forms import StockOptionForm, StockScannerForm
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 import pandas as pd
 import quantstats as qs
+from .helper import perodical_index,perodical_sector,stocklist_sectorial
 qs.extend_pandas()
 
 
@@ -29,26 +30,31 @@ def StockListView(request):
 
     if options == '#2':
 
-        qs = stocks = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+        qs = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
             .annotate(diff=F('close')-F('prev_close'))\
             .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-            .filter(stock__broder_id=1)
+            .filter(stock__broder_id=1)\
+            .filter(date__gte=last_day)
+
 
     elif options == '#3':
-
-        qs = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-            .annotate(diff=F('close')-F('prev_close'))\
-            .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-            .filter(stock__sectorial_index_id=7)\
-            .filter(date__gte=last_day)
-
+        qs = stocklist_sectorial(StockPrice,7)
+              
     elif options == '#4':
-
-        qs = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-            .annotate(diff=F('close')-F('prev_close'))\
-            .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-            .filter(stock__sectorial_index_id=3)\
-            .filter(date__gte=last_day)
+        qs = stocklist_sectorial(StockPrice,3)
+    
+    elif options == '#5':
+        qs = stocklist_sectorial(StockPrice,2)
+    
+    elif options == '#6':
+        qs = stocklist_sectorial(StockPrice,8)
+    
+    elif options == '#7':
+        qs = stocklist_sectorial(StockPrice,1)
+    
+    elif options == '#8':
+        qs = stocklist_sectorial(StockPrice,5)
+       
     else:
 
         qs = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
@@ -181,11 +187,15 @@ def stock_scanner(request):
     return render(request, 'stocks/stocks_scanner.html', context)
 
 
-def heatmap_sector(request, sector):
+def heatmap_sector(request,sector):
+    # mysector=perodical_sector(SectorialIndex,Stocks,StockPrice,sector)
+    # context = {"stocksectorprice": mysector[2],
+    #            "sectorstock": mysector[1]}
+
+
 
     sectorstock = SectorialIndex.objects.filter(sector=sector).first()
     sectorcount = Stocks.objects.filter(sectorial_index=sectorstock.id).count()
-
     sectorstocks = StockPrice.objects.all().select_related('stock')
     stocksectorprice = sectorstocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
         .annotate(diff=F('close')-F('prev_close'))\
@@ -201,135 +211,52 @@ def heatmap_sector(request, sector):
 
 def heatmap_stocks(request, sector):
 
-    sectorstock = Sector.objects.filter(sector=sector).first()
-    sectorcount = Stocks.objects.filter(sector=sectorstock.id).count()
-
-    indexstocks = StockPrice.objects.all().select_related('stock')
-    stocksectorprice = indexstocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(date__gte=last_day)\
-        .filter(stock__sector_id=sectorstock.id)\
-        .order_by('-date', '-per_chan')[:sectorcount]
-
-    context = {"stocksectorprice": stocksectorprice,
-               "sectorstock": sectorstock}
+    mysector=perodical_sector(Sector,Stocks,StockPrice,sector)
+    context = {"stocksectorprice": mysector[2],
+               "sectorstock": mysector[1]}
     return render(request, 'stocks/sector_stock_heatmap.html', context)
 
 
 def heatmap_index(request, indices):
-
-    indexstock = BroaderIndex.objects.filter(indices=indices).first()
-    indexcount = Stocks.objects.filter(broder_id=indexstock.id).count()
-
-    indexstocks = StockPrice.objects.all().select_related('stock')
-    stocksectorprice = indexstocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(date__gte=last_day)\
-        .filter(stock__broder_id=indexstock.id)\
-        .order_by('-date', '-per_chan')[:indexcount]
-
-    context = {"stocksectorprice": stocksectorprice, "sectorstock": indexstock}
+    myindex=perodical_index(BroaderIndex,Stocks,StockPrice,indices,days=1,offset=1)
+    context = {"stocksectorprice": myindex[4],
+               "sectorstock": myindex[1], "indexcount": myindex[2]}
     return render(request, 'stocks/heatmap_index.html', context)
 
 
-def chart(request):
-    x_data = [0, 1, 2, 3]
-    y_data = [x**2 for x in x_data]
-    plot_div = plot([Scatter(x=x_data, y=y_data,
-                             mode='lines', name='test',
-                             opacity=0.8, marker_color='green')],
-                    output_type='div', show_link=False, link_text="")
-    return render(request, "stocks/index1.html", context={'plot_div': plot_div})
-
-
 def oneweekindex(request, indices):
-    oneweekdate = latest_day-timedelta(days=10)
-    indexstock = BroaderIndex.objects.filter(indices=indices).first()
-    indexcount = Stocks.objects.filter(broder_id=indexstock.id).count()
-    indexstocks = StockPrice.objects.all().select_related('stock')
-    stocksectorprice = indexstocks.annotate(prev_close=Window(expression=Lag('close', offset=6), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(date__gte=oneweekdate)\
-        .filter(stock__broder_id=indexstock.id)\
-        .order_by('-date', '-per_chan')[:indexcount]
-
-    context = {"stocksectorprice": stocksectorprice,
-               "sectorstock": indexstock, "indexcount": indexcount}
+    myindex=perodical_index(BroaderIndex,Stocks,StockPrice,indices,days=10,offset=6)
+    context = {"stocksectorprice": myindex[4],
+               "sectorstock": myindex[1], "indexcount": myindex[2]}
     return render(request, 'stocks/heatmap_index_1week.html', context)
 
-
 def onemonthindex(request, indices):
-    onemonthdate = latest_day-timedelta(days=35)
-    indexstock = BroaderIndex.objects.filter(indices=indices).first()
-    indexcount = Stocks.objects.filter(broder_id=indexstock.id).count()
-
-    indexstocks = StockPrice.objects.all().select_related('stock')
-    stocksectorprice = indexstocks.annotate(prev_close=Window(expression=Lag('close', offset=23), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(date__gte=onemonthdate)\
-        .filter(stock__broder_id=indexstock.id)\
-        .order_by('-date', '-per_chan')[:indexcount]
-
-    context = {"stocksectorprice": stocksectorprice,
-               "sectorstock": indexstock, "indexcount": indexcount}
+    myindex=perodical_index(BroaderIndex,Stocks,StockPrice,indices,days=35,offset=23)
+    context = {"stocksectorprice": myindex[4],
+               "sectorstock": myindex[1], "indexcount": myindex[2]}
     return render(request, 'stocks/heatmap_index_1month.html', context)
 
 
 def threemonthindex(request, indices):
-    threemonthdate = latest_day-timedelta(days=105)
-    indexstock = BroaderIndex.objects.filter(indices=indices).first()
-    indexcount = Stocks.objects.filter(broder_id=indexstock.id).count()
 
-    indexstocks = StockPrice.objects.all().select_related('stock')
-    stocksectorprice = indexstocks.annotate(prev_close=Window(expression=Lag('close', offset=68), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(date__gte=threemonthdate)\
-        .filter(stock__broder_id=indexstock.id)\
-        .order_by('-date', '-per_chan')[:indexcount]
-
-    context = {"stocksectorprice": stocksectorprice,
-               "sectorstock": indexstock, "indexcount": indexcount}
+    myindex=perodical_index(BroaderIndex,Stocks,StockPrice,indices,days=105,offset=68)
+    context = {"stocksectorprice": myindex[4],
+               "sectorstock": myindex[1], "indexcount": myindex[2]}
     return render(request, 'stocks/heatmap_index_3month.html', context)
 
 
 def sixmonthindex(request, indices):
-    sixmonthdate = latest_day-timedelta(days=200)
-
-    indexstock = BroaderIndex.objects.filter(indices=indices).first()
-    indexcount = Stocks.objects.filter(broder_id=indexstock.id).count()
-    indexstocks = StockPrice.objects.all().select_related('stock')
-    stocksectorprice = indexstocks.annotate(prev_close=Window(expression=Lag('close', offset=135), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(date__gte=sixmonthdate)\
-        .filter(stock__broder_id=indexstock.id)\
-        .order_by('-date', '-per_chan')[:indexcount]
-
-    context = {"stocksectorprice": stocksectorprice,
-               "sectorstock": indexstock, "indexcount": indexcount}
+    myindex=perodical_index(BroaderIndex,Stocks,StockPrice,indices,days=200,offset=135)
+    context = {"stocksectorprice": myindex[4],
+               "sectorstock": myindex[1], "indexcount": myindex[2]}
     return render(request, 'stocks/heatmap_index_6month.html', context)
 
 
 def oneyearindex(request, indices):
+    myindex=perodical_index(BroaderIndex,Stocks,StockPrice,indices,days=400,offset=260)
+    context = {"stocksectorprice": myindex[4],
+               "sectorstock": myindex[1], "indexcount": myindex[2]}
 
-    oneyeardate = latest_day-timedelta(days=400)
-    indexstock = BroaderIndex.objects.filter(indices=indices).first()
-    indexcount = Stocks.objects.filter(broder_id=indexstock.id).count()
-    indexstocks = StockPrice.objects.all().select_related('stock')
-    stocksectorprice = indexstocks.annotate(prev_close=Window(expression=Lag('close', offset=260), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(date__gte=oneyeardate)\
-        .filter(stock__broder_id=indexstock.id)\
-        .order_by('-date', '-per_chan')[:indexcount]
-
-    context = {"stocksectorprice": stocksectorprice,
-               "sectorstock": indexstock, "indexcount": indexcount}
     return render(request, 'stocks/heatmap_index_1year.html', context)
 
 
@@ -358,15 +285,28 @@ def index(request, indices):
     main_index = BroaderIndex.objects.filter(indices=indices).first()
     index_price = IndexPrice.objects.filter(
         broader_id=main_index.id).order_by('-date').all()
+   
     context = {'main_index': main_index, 'index_price': index_price}
 
     return render(request, 'stocks/broader_index.html', context)
 
 
-def sector(request, sector):
+def sector(request, sector):  
+
     sector_index1 = SectorialIndex.objects.filter(sector=sector).first()
     sector_price = IndexPrice.objects.filter(
         sectorial_id=sector_index1.id).order_by('-date').all()
     context = {'sector_index1': sector_index1, 'sector_price': sector_price}
-
     return render(request, 'stocks/sector_index.html', context)
+
+
+def chart(request):
+    x_data = [0, 1, 2, 3]
+    y_data = [x**2 for x in x_data]
+    plot_div = plot([Scatter(x=x_data, y=y_data,
+                             mode='lines', name='test',
+                             opacity=0.8, marker_color='green')],
+                    output_type='div', show_link=False, link_text="")
+    return render(request, "stocks/index1.html", context={'plot_div': plot_div})
+
+

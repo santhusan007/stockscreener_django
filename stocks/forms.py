@@ -5,8 +5,14 @@ from .patterns import candlestick_patterns
 QUERY_OPTIONS=(
     ('#1', 'All Stocks'),
     ('#2','Nifty50'),
-     ('#3','NiftyMetal'),
-     ('#4','BankNifty'),
+     ('#3','Nifty Metal'),
+     ('#4','Bank Nifty'),
+     ('#5','Nifty Auto'),
+     ('#6','Nifty Pharma'),
+     ('#7','Nifty FMCG'),
+     ('#8','Nifty IT'),
+
+
 
 )
 
