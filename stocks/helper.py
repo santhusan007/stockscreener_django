@@ -5,7 +5,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import register_adapter, AsIs
 import pandas as pd
-from .models import BroaderIndex,IndexPrice
+from .models import BroaderIndex,StockPrice
 from datetime import timedelta
 from django.db.models.functions import Lag, Round
 from django.db.models import F, Window, Q
@@ -133,5 +133,45 @@ def stocklist_sectorial(stocks,number):
             .annotate(diff=F('close')-F('prev_close'))\
             .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
             .filter(stock__sectorial_index_id=number)\
-            .filter(date__gte=last_day)
+            .filter(date__gte=last_day)\
+            .order_by('-per_chan')
     return qs
+
+def index_sector_price(index,id):
+    
+    indexprice = index.annotate(prev_close=Window(expression=Lag('close'), partition_by=F(id), order_by=F('date').asc(),))\
+        .annotate(diff=F('close')-F('prev_close'))\
+        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
+        .filter(date__gte=last_day)
+
+    return indexprice
+
+def broader_index_deatils(stocks,number):
+    mystocks = stocks.objects.all().select_related('stock')
+    qs=mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+            .annotate(diff=F('close')-F('prev_close'))\
+            .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
+            .filter(stock__broder_id=number)\
+            .filter(date__gte=last_day)\
+            .order_by('-per_chan')
+    
+    return qs
+    
+def mainpage_dropdown(option):
+    options ={
+                '#2':broader_index_deatils(StockPrice,1),
+                '#3':broader_index_deatils(StockPrice,3),
+                '#4':broader_index_deatils(StockPrice,4),
+                '#5':stocklist_sectorial(StockPrice,7),
+                '#6':stocklist_sectorial(StockPrice,3),
+                '#7':stocklist_sectorial(StockPrice,2),
+                '#8':stocklist_sectorial(StockPrice,8),
+                '#9':stocklist_sectorial(StockPrice,1),
+                '#10':stocklist_sectorial(StockPrice,5),
+            
+    }
+    if option in options:
+        qs= options[option]
+        return qs
+
+    

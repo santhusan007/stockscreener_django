@@ -13,7 +13,9 @@ from .forms import StockOptionForm, StockScannerForm
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 import pandas as pd
 import quantstats as qs
-from .helper import perodical_index,perodical_sector,stocklist_sectorial
+from .helper import (
+                 perodical_index,perodical_sector,stocklist_sectorial,
+                    index_sector_price,broader_index_deatils,mainpage_dropdown)
 qs.extend_pandas()
 
 
@@ -28,40 +30,15 @@ def StockListView(request):
     # print(form)
     mystocks = StockPrice.objects.all().select_related('stock')
 
-    if options == '#2':
-
-        qs = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+    if options == '#1':
+         qs = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
             .annotate(diff=F('close')-F('prev_close'))\
             .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-            .filter(stock__broder_id=1)\
-            .filter(date__gte=last_day)
-
-
-    elif options == '#3':
-        qs = stocklist_sectorial(StockPrice,7)
-              
-    elif options == '#4':
-        qs = stocklist_sectorial(StockPrice,3)
-    
-    elif options == '#5':
-        qs = stocklist_sectorial(StockPrice,2)
-    
-    elif options == '#6':
-        qs = stocklist_sectorial(StockPrice,8)
-    
-    elif options == '#7':
-        qs = stocklist_sectorial(StockPrice,1)
-    
-    elif options == '#8':
-        qs = stocklist_sectorial(StockPrice,5)
-       
+            .filter(date__gte=last_day).order_by('-per_chan')
     else:
-
-        qs = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-            .annotate(diff=F('close')-F('prev_close'))\
-            .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-            .filter(date__gte=last_day)
-
+        #if else replace with dictionery 
+        qs=mainpage_dropdown(options)
+    
     stocks = qs
     broders = BroaderIndex.objects.all().order_by('indices')
     sectors = Sector.objects.all().order_by('sector')
@@ -192,12 +169,10 @@ def heatmap_sector(request,sector):
     # context = {"stocksectorprice": mysector[2],
     #            "sectorstock": mysector[1]}
 
-
-
     sectorstock = SectorialIndex.objects.filter(sector=sector).first()
     sectorcount = Stocks.objects.filter(sectorial_index=sectorstock.id).count()
     sectorstocks = StockPrice.objects.all().select_related('stock')
-    stocksectorprice = sectorstocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+    stocksectorprice = sectorstocks.annotate(prev_close=Window(expression=Lag('close'),partition_by=F("stock_id"), order_by=F('date').asc(),))\
         .annotate(diff=F('close')-F('prev_close'))\
         .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
         .filter(date__gte=last_day)\
@@ -264,41 +239,29 @@ def index_sector(request):
 
     myIndex = IndexPrice.objects.all().select_related(
         'broader').filter(Q(broader__isnull=False))
-    indexprice = myIndex.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("broader_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(date__gte=last_day)
+    indexprice=index_sector_price(myIndex,"broader_id")
 
     mySector = IndexPrice.objects.all().select_related(
         'sectorial').filter(Q(sectorial__isnull=False))
-    sectorprice = mySector.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("sectorial_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(date__gte=last_day)
+    sectorprice=index_sector_price(mySector,"sectorial_id")  
 
     context = {"indexprice": indexprice, "sectorprice": sectorprice}
-    # print(last_day,latest_day)
     return render(request, 'stocks/index_sector.html', context)
 
-
-def index(request, indices):
-    main_index = BroaderIndex.objects.filter(indices=indices).first()
+def index(request,sector):
+    main_index = BroaderIndex.objects.filter(indices=sector).first()
     index_price = IndexPrice.objects.filter(
         broader_id=main_index.id).order_by('-date').all()
-   
     context = {'main_index': main_index, 'index_price': index_price}
 
     return render(request, 'stocks/broader_index.html', context)
 
-
 def sector(request, sector):  
-
     sector_index1 = SectorialIndex.objects.filter(sector=sector).first()
     sector_price = IndexPrice.objects.filter(
         sectorial_id=sector_index1.id).order_by('-date').all()
     context = {'sector_index1': sector_index1, 'sector_price': sector_price}
     return render(request, 'stocks/sector_index.html', context)
-
 
 def chart(request):
     x_data = [0, 1, 2, 3]
