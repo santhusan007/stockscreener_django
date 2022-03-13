@@ -2,10 +2,8 @@ from django.db.models.functions import Lag, Round
 from django.db.models import F, Window, Q
 from .helper import present_day, prev_day
 import talib
-from datetime import timedelta
 from plotly.graph_objs import Scatter
 from plotly.offline import plot
-from .patterns import candlestick_patterns
 from django.shortcuts import render
 from .models import (BroaderIndex, Sector, SectorialIndex, Stocks,StockPrice, IndexPrice)
 from django.db import connection
@@ -13,9 +11,8 @@ from .forms import StockOptionForm, StockScannerForm
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 import pandas as pd
 import quantstats as qs
-from .helper import (
-                 perodical_index,perodical_sector,stocklist_sectorial,
-                    index_sector_price,broader_index_deatils,mainpage_dropdown)
+from .helper import (perodical_index,perodical_sector,
+                    index_sector_price,mainpage_dropdown)
 qs.extend_pandas()
 
 
@@ -30,14 +27,17 @@ def StockListView(request):
     # print(form)
     mystocks = StockPrice.objects.all().select_related('stock')
 
-    if options == '#1':
-         qs = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+    if options!='#1' :
+
+        qs=mainpage_dropdown(options)
+         
+    else:
+        qs = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
             .annotate(diff=F('close')-F('prev_close'))\
             .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
             .filter(date__gte=last_day).order_by('-per_chan')
-    else:
         #if else replace with dictionery 
-        qs=mainpage_dropdown(options)
+        
     
     stocks = qs
     broders = BroaderIndex.objects.all().order_by('indices')
