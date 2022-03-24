@@ -1,51 +1,45 @@
 from django.db.models.functions import Lag, Round
 from django.db.models import F, Window, Q
-from .helper import present_day, prev_day
 import talib
 from plotly.graph_objs import Scatter
 from plotly.offline import plot
 from django.shortcuts import render
-from .models import (BroaderIndex, Sector, SectorialIndex, Stocks,StockPrice, IndexPrice)
+from .models import (BroaderIndex, Sector, SectorialIndex,
+                     Stocks, StockPrice, IndexPrice)
 from django.db import connection
 from .forms import StockOptionForm, StockScannerForm
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 import pandas as pd
 import quantstats as qs
-from .helper import (perodical_index,perodical_sector,
-                    index_sector_price,mainpage_dropdown)
+from .helper import (perodical_index, perodical_sector,present_day, prev_day,
+                     index_sector_price, mainpage_dropdown, mystocklist, 
+                     mainpage_details,perodical_mainsector)
 qs.extend_pandas()
-
 
 latest_day = present_day()
 last_day = prev_day(latest_day)
 # Create your views here.
 
-
 def StockListView(request):
     form = StockOptionForm(request.POST or None)
     options = request.POST.get("options")
     # print(form)
-    mystocks = StockPrice.objects.all().select_related('stock')
+    mystocks = mystocklist()
 
-    if options!='#1' :
-
-        qs=mainpage_dropdown(options)
-         
-    else:
-        qs = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-            .annotate(diff=F('close')-F('prev_close'))\
-            .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-            .filter(date__gte=last_day).order_by('-per_chan')
-        #if else replace with dictionery 
+    if options :
+        qs = mainpage_dropdown(options)
         
-    
+    else:
+        qs = mainpage_details()
+        # if else replace with dictionery
+
     stocks = qs
     broders = BroaderIndex.objects.all().order_by('indices')
     sectors = Sector.objects.all().order_by('sector')
     sector_index = SectorialIndex.objects.all().order_by('sector')
 
     context = {'stocks': stocks, 'form': form, 'sectors': sectors,
-               'broders': broders, 'sector_index': sector_index}
+               'broders': broders, 'sector_index': sector_index,'latest_day':latest_day }
 
     return render(request, "stocks/stocks_list.html", context)
 
@@ -85,10 +79,11 @@ def dictfetchall(cursor):
     ]
 
 
-def stock_return(request,company):
+def stock_return(request, company):
 
     stock = Stocks.objects.filter(company=company).first()
-    prices = StockPrice.objects.filter(stock_id=stock.id).order_by('date').all()
+    prices = StockPrice.objects.filter(
+        stock_id=stock.id).order_by('date').all()
     queryset = prices.values_list('id', 'stock_id', 'close', 'date')
     stock_df = pd.DataFrame(list(queryset), columns=[
                             'id', 'stock_id', 'close', 'date'])
@@ -160,108 +155,130 @@ def stock_scanner(request):
         # print(stocks)
 
     context = {"form": form, "options": options, "stocks": stocks}
-
     return render(request, 'stocks/stocks_scanner.html', context)
 
 
-def heatmap_sector(request,sector):
+def heatmap_sector(request, sector):
     # mysector=perodical_sector(SectorialIndex,Stocks,StockPrice,sector)
     # context = {"stocksectorprice": mysector[2],
     #            "sectorstock": mysector[1]}
+    
+    if request.method=='POST':
+        heatmap=request.POST.get("heatmap")
+        print(heatmap)
 
-    sectorstock = SectorialIndex.objects.filter(sector=sector).first()
-    sectorcount = Stocks.objects.filter(sectorial_index=sectorstock.id).count()
-    sectorstocks = StockPrice.objects.all().select_related('stock')
-    stocksectorprice = sectorstocks.annotate(prev_close=Window(expression=Lag('close'),partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(date__gte=last_day)\
-        .filter(stock__sectorial_index_id=sectorstock.id)\
-        .order_by('-date', '-per_chan')[:sectorcount]
+        if heatmap=="1day":
+            mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=1, offset=1)
+        elif heatmap=="1week":
+            mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=10, offset=6)
+        elif heatmap=="1month":
+           mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=35, offset=23)
+        elif heatmap=="3month":
+           mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=105, offset=68)
+        elif heatmap=="6month":
+            mysector= perodical_mainsector(SectorialIndex, Stocks, sector, days=200, offset=135)
+        elif heatmap=="1year":
+            mysector =perodical_mainsector(SectorialIndex, Stocks, sector, days=400, offset=260)
+           
+        context = {"stocksectorprice": mysector[2],
+                "sectorstock": mysector[1],"heatmap":heatmap}
+        return render(request, 'stocks/sector_heatmap.html', context)
 
-    context = {"stocksectorprice": stocksectorprice,
-               "sectorstock": sectorstock, "sectorcount": sectorcount}
-    return render(request, 'stocks/sector_heatmap.html', context)
+    else:
+        mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=1, offset=1)
+        
+        context = {"stocksectorprice": mysector[2],
+                "sectorstock": mysector[1]}
+        return render(request, 'stocks/sector_heatmap.html', context)
 
 
 def heatmap_stocks(request, sector):
+    if request.method=='POST':
+        heatmap=request.POST.get("heatmap")
+        print(heatmap)
 
-    mysector=perodical_sector(Sector,Stocks,StockPrice,sector)
-    context = {"stocksectorprice": mysector[2],
+        if heatmap=="1day":
+            mysector = perodical_sector(Sector, Stocks, sector, days=1, offset=1)
+        elif heatmap=="1week":
+            mysector = perodical_sector(Sector, Stocks, sector, days=10, offset=6)
+        elif heatmap=="1month":
+           mysector = perodical_sector(Sector, Stocks, sector, days=35, offset=23)
+        elif heatmap=="3month":
+           mysector = perodical_sector(Sector, Stocks, sector, days=105, offset=68)
+        elif heatmap=="6month":
+            mysector= perodical_sector(Sector, Stocks, sector, days=200, offset=135)
+        elif heatmap=="1year":
+            mysector =perodical_sector(Sector, Stocks, sector, days=400, offset=260)
+           
+        context = {"stocksectorprice": mysector[2],
+                "sectorstock": mysector[1],"heatmap":heatmap}
+        return render(request, 'stocks/sector_stock_heatmap.html', context)
+
+
+    else:
+        mysector = perodical_sector(Sector, Stocks, sector, days=1, offset=1)
+        context = {"stocksectorprice": mysector[2],
                "sectorstock": mysector[1]}
-    return render(request, 'stocks/sector_stock_heatmap.html', context)
+        return render(request, 'stocks/sector_stock_heatmap.html', context)
 
 
 def heatmap_index(request, indices):
-    myindex=perodical_index(BroaderIndex,Stocks,StockPrice,indices,days=1,offset=1)
-    context = {"stocksectorprice": myindex[4],
+    if request.method=='POST':
+        heatmap=request.POST.get("heatmap")
+        print(heatmap)
+        if heatmap=="1day":
+                myindex = perodical_index(BroaderIndex, Stocks, indices, days=1, offset=1)
+        elif heatmap=="1week":
+                myindex = perodical_index(BroaderIndex, Stocks, indices, days=10, offset=6)
+        elif heatmap=="1month":
+                myindex = perodical_index(BroaderIndex, Stocks, indices, days=35, offset=23)
+        elif heatmap=="3month":
+                myindex = perodical_index(BroaderIndex, Stocks, indices, days=105, offset=68)
+        elif heatmap=="6month":
+                myindex = perodical_index(BroaderIndex, Stocks, indices, days=200, offset=135)
+        elif heatmap=="1year":
+                myindex = perodical_index(BroaderIndex, Stocks, indices, days=400, offset=260)
+        context = {"stocksectorprice": myindex[4],
+               "sectorstock": myindex[1], "indexcount": myindex[2],"heatmap":heatmap}
+        return render(request, 'stocks/heatmap_index.html', context)
+                
+    else:
+        myindex = perodical_index(BroaderIndex, Stocks, indices, days=1, offset=1)
+            
+        context = {"stocksectorprice": myindex[4],
                "sectorstock": myindex[1], "indexcount": myindex[2]}
-    return render(request, 'stocks/heatmap_index.html', context)
-
-
-def oneweekindex(request, indices):
-    myindex=perodical_index(BroaderIndex,Stocks,StockPrice,indices,days=10,offset=6)
-    context = {"stocksectorprice": myindex[4],
-               "sectorstock": myindex[1], "indexcount": myindex[2]}
-    return render(request, 'stocks/heatmap_index_1week.html', context)
-
-def onemonthindex(request, indices):
-    myindex=perodical_index(BroaderIndex,Stocks,StockPrice,indices,days=35,offset=23)
-    context = {"stocksectorprice": myindex[4],
-               "sectorstock": myindex[1], "indexcount": myindex[2]}
-    return render(request, 'stocks/heatmap_index_1month.html', context)
-
-
-def threemonthindex(request, indices):
-
-    myindex=perodical_index(BroaderIndex,Stocks,StockPrice,indices,days=105,offset=68)
-    context = {"stocksectorprice": myindex[4],
-               "sectorstock": myindex[1], "indexcount": myindex[2]}
-    return render(request, 'stocks/heatmap_index_3month.html', context)
-
-
-def sixmonthindex(request, indices):
-    myindex=perodical_index(BroaderIndex,Stocks,StockPrice,indices,days=200,offset=135)
-    context = {"stocksectorprice": myindex[4],
-               "sectorstock": myindex[1], "indexcount": myindex[2]}
-    return render(request, 'stocks/heatmap_index_6month.html', context)
-
-
-def oneyearindex(request, indices):
-    myindex=perodical_index(BroaderIndex,Stocks,StockPrice,indices,days=400,offset=260)
-    context = {"stocksectorprice": myindex[4],
-               "sectorstock": myindex[1], "indexcount": myindex[2]}
-
-    return render(request, 'stocks/heatmap_index_1year.html', context)
-
-
+        return render(request, 'stocks/heatmap_index.html', context)
+ 
 def index_sector(request):
 
     myIndex = IndexPrice.objects.all().select_related(
         'broader').filter(Q(broader__isnull=False))
-    indexprice=index_sector_price(myIndex,"broader_id")
+    indexprice = index_sector_price(myIndex, "broader_id")
 
     mySector = IndexPrice.objects.all().select_related(
         'sectorial').filter(Q(sectorial__isnull=False))
-    sectorprice=index_sector_price(mySector,"sectorial_id")  
+    sectorprice = index_sector_price(mySector, "sectorial_id")
 
     context = {"indexprice": indexprice, "sectorprice": sectorprice}
+    
     return render(request, 'stocks/index_sector.html', context)
 
-def index(request,sector):
+
+def index(request, sector):
     main_index = BroaderIndex.objects.filter(indices=sector).first()
     index_price = IndexPrice.objects.filter(
         broader_id=main_index.id).order_by('-date').all()
     context = {'main_index': main_index, 'index_price': index_price}
-
     return render(request, 'stocks/broader_index.html', context)
 
-def sector(request, sector):  
+
+def sector(request, sector):
     sector_index1 = SectorialIndex.objects.filter(sector=sector).first()
     sector_price = IndexPrice.objects.filter(
         sectorial_id=sector_index1.id).order_by('-date').all()
     context = {'sector_index1': sector_index1, 'sector_price': sector_price}
     return render(request, 'stocks/sector_index.html', context)
+
 
 def chart(request):
     x_data = [0, 1, 2, 3]
@@ -271,5 +288,3 @@ def chart(request):
                              opacity=0.8, marker_color='green')],
                     output_type='div', show_link=False, link_text="")
     return render(request, "stocks/index1.html", context={'plot_div': plot_div})
-
-

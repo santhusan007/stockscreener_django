@@ -30,18 +30,23 @@
   }
 </style>
 
+{% if request.POST %}
+<h1> Map of {{sectorstock.sector}} stocks for {{heatmap}} By Price Change % </h1>
+<br>
+{% else %}
+<h1> Map of {{sectorstock.sector}} stocks for daily By Price Change % </h1>
+<br>
+{% endif %}
 
-<h2> Map of {{sectorstock.sector}} stocks for Period Daily By Price Change % </h2>
-
-<form method="POST">
+<form action="" method="POST">
   {% csrf_token %}
-<input type="submit" name="btn" value="Daily" class="float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">
-<input type="submit" name="btn" value="1week" class="float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">
-<input type="submit" name="btn" value="1month" class="float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg"> 
-<input type="submit" name="btn" value="3month" class="float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">
-<input type="submit" name="btn" value="6month" class="float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">
-<input type="submit" name="btn" value="1year" class="float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">
 
+<button type="submit" value="1day" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1day </button>
+ <button type="submit" value="1week" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1week </button>
+<button type="submit" value="1month" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1month </button>
+<button type="submit" value="3month" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">3month</button>
+<button type="submit" value="6month" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">6month </button>
+<button type="submit" value="1year" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1Year </button>
 </form>
 
 {{ val }}

@@ -37,18 +37,27 @@ h1 {
 
 </style>
 
+{% if request.POST %}
+  
 
-<h1 class="mine"> Map of {{sectorstock.indices}} stocks for Period Daily By Price Change % </h1>
+<h1 class="mine"> Map of {{sectorstock.indices}} stocks for {{heatmap}} By Price Change % </h1>
 <br>
+{% else %}
+<h1 class="mine"> Map of {{sectorstock.indices}} stocks for Daily By Price Change % </h1>
+<br>
+{% endif %}
 
 
+<form action="" method="POST">
+  {% csrf_token %}
 
-<a href="{% url 'stocks:oneweekindex' sectorstock.indices %}"> <button type="submit" name="1week" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1week </a></button>
-<a href="{% url 'stocks:onemonthindex' sectorstock.indices %}"><button type="submit" name="1month" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1month </a></button>
-<a href="{% url 'stocks:threemonthindex' sectorstock.indices %}"><button type="submit" name="3month" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">3month</a></button>
-<a href="{% url 'stocks:sixmonthindex' sectorstock.indices %}"><button type="submit" name="6month" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">6month</a> </button>
-<a href="{% url 'stocks:oneyearindex' sectorstock.indices %}"><button type="submit" name="1Year" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1Year </a></button>
-
+<a href=""> <button type="submit" value="1day" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1day </button></a>
+<a href=""> <button type="submit" value="1week" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1week </button></a>
+<a href=""><button type="submit" value="1month" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1month </button></a>
+<a href=""><button type="submit" value="3month" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">3month</button></a>
+<a href=""><button type="submit" value="6month" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">6month </button></a>
+<a href=""><button type="submit" value="1year" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1Year </button></a>
+</form>
 <br><br>
 
 

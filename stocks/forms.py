@@ -1,8 +1,10 @@
+from email.policy import default
 from django import forms
 from .patterns import candlestick_patterns
 
 
 QUERY_OPTIONS=(
+    ('#0', 'Select Option'),
     ('#1', 'All Stocks'),
     ('#2','Nifty 50'),
     ('#3','Midcap 100'),

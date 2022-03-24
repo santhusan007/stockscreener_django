@@ -2,6 +2,7 @@ from django.db import models
 
 # Create your models here.
 
+
 class BroaderIndex(models.Model):
     id = models.IntegerField(primary_key=True)
     indices = models.CharField(max_length=100)
@@ -13,6 +14,7 @@ class BroaderIndex(models.Model):
     class Meta:
         managed = False
         db_table = 'broader_index'
+
 
 class Sector(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -43,13 +45,15 @@ class Stocks(models.Model):
     id = models.IntegerField(primary_key=True)
     symbol = models.CharField(unique=True, max_length=100)
     company = models.CharField(max_length=200)
-    sector = models.ForeignKey(Sector, models.DO_NOTHING, blank=True, null=True)
-    broder = models.ForeignKey(BroaderIndex, models.DO_NOTHING, blank=True, null=True)
-    sectorial_index = models.ForeignKey(SectorialIndex, models.DO_NOTHING, db_column='sectorial_index', blank=True, null=True)
+    sector = models.ForeignKey(
+        Sector, models.DO_NOTHING, blank=True, null=True)
+    broder = models.ForeignKey(
+        BroaderIndex, models.DO_NOTHING, blank=True, null=True)
+    sectorial_index = models.ForeignKey(
+        SectorialIndex, models.DO_NOTHING, db_column='sectorial_index', blank=True, null=True)
 
     def __str__(self):
         return self.symbol
-
 
     class Meta:
         managed = False
@@ -104,11 +108,12 @@ class RbiExchange(models.Model):
 
     def __str__(self):
         return f"{self.cur}"
-    
+
     class Meta:
         managed = False
         db_table = 'rbi_exchange'
-        
+
+
 class FoStatus(models.Model):
     id = models.IntegerField(primary_key=True)
     stk = models.ForeignKey(Stocks, models.DO_NOTHING)
@@ -124,8 +129,10 @@ class FoStatus(models.Model):
 
 class IndexPrice(models.Model):
     id = models.IntegerField(primary_key=True)
-    broader = models.ForeignKey(BroaderIndex, models.DO_NOTHING, blank=True, null=True)
-    sectorial = models.ForeignKey(SectorialIndex, models.DO_NOTHING, blank=True, null=True)
+    broader = models.ForeignKey(
+        BroaderIndex, models.DO_NOTHING, blank=True, null=True)
+    sectorial = models.ForeignKey(
+        SectorialIndex, models.DO_NOTHING, blank=True, null=True)
     date = models.DateField()
     open = models.FloatField(blank=True, null=True)
     high = models.FloatField(blank=True, null=True)
@@ -138,7 +145,7 @@ class IndexPrice(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'index_price'       
+        db_table = 'index_price'
 
 
 class StockPrice(models.Model):
@@ -157,6 +164,3 @@ class StockPrice(models.Model):
     class Meta:
         managed = False
         db_table = 'stock_price'
-    
-   
-
