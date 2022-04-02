@@ -45,8 +45,10 @@
                     <th data-type="number">High</th>
                     <th data-type="number">Low</th>
                     <th data-type="number">Close</th>
-                    <th data-type="number">Previous_close</th>
-                    <th data-type="number">% Price Change</th>
+                    <th data-type="number">Last_close</th>
+                    <th data-type="number">52WH</th>
+                    <th data-type="number">52WL</th>
+                   <th data-type="number">% Change</th>
                     <th data-type="number">Volume</th>
                   
                 </tr>
@@ -62,6 +64,8 @@
                     <td>{{stock.low}}</td>
                     <td>{{stock.close}}</td>
                     <td>{{stock.prev_close}}</td>
+                    <td>{{stock.yearhigh}}</td>
+                    <td>{{stock.yearlow}}</td>
                     {% if stock.per_chan >= 0 %}
                     <td style="color: green;">{{stock.per_chan}}</td>
                     {% else %}

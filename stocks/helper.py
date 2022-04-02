@@ -9,7 +9,7 @@ import pandas as pd
 from .models import BroaderIndex, StockPrice
 from datetime import timedelta
 from django.db.models.functions import Lag, Round
-from django.db.models import F, Window, Q
+from django.db.models import F, Window, Q,Max,Min,Count
 
 
 NAME = settings.NAME
@@ -59,110 +59,55 @@ def prev_day(latest_d):
             break
         else:
             i += 1
-# present_day=present_day()
-# prev_day=prev_day(present_day)
-# print(present_day)
-# print(prev_day)
-
-
-def stock_df(symbol):
-    conn = psycopg2.connect(host='localhost', database='market', user='postgres', password='1234',
-                            cursor_factory=RealDictCursor)
-
-    c = conn.cursor()
-    c.execute("""SELECT stock_price.date ,
-            stocks.symbol,stock_price.close FROM stock_price JOIN stocks 
-                ON stocks.id=stock_price.stock_id where symbol = %s order by date  """, (symbol,))
-    stock = c.fetchall()
-    stock_df = pd.DataFrame(stock, columns=['date', 'symbol', 'close'])
-    convert_dict = {'close': float}
-    stock_df = stock_df.astype(convert_dict)
-    stock_df['date'] = pd.to_datetime(stock_df['date'])
-    stock_df.set_index('date', inplace=True)
-    stock_df['Close'] = stock_df.close.pct_change()
-    stock_df = stock_df['Close']
-    return(stock_df)
-
-# df=stock_df(symbol)
-    # c=connection.cursor()
-    # c.execute(""" SELECT id,symbol,company from stocks where symbol=%s""", (symbol,))
-    # row = c.fetchone()
-
-    # c.execute(""" SELECT * from stock_price where stock_id= %s """, (row[0],))
-
-    # prices = dictfetchall(c)
-
-    # stock_df = pd.DataFrame(prices, columns=[
-    #                         'id', 'stock_id', 'open', 'high', 'low', 'close', 'volume', 'date'])
-
-
-    # stock_df["open"] = stock_df["open"].astype(float)
-    # stock_df["high"] = stock_df["high"].astype(float)
-    # stock_df["low"] = stock_df["low"].astype(float)
-    # stock_df["close"] = stock_df["close"].astype(float)
-    # # stock_df["volume"] = stock_df["volume"].astype(float)
 latest_day = present_day()
 last_day = prev_day(latest_day)
 
 
-def mystocklist():
-    return StockPrice.objects.all().select_related('stock')
+def dateFilter(days):
+    if days==1:
+        return last_day
+    return latest_day-timedelta(days=days)
 
+def mystocklist(stocks,offset,days):
+        """function to filter the stock / index price query set with annotate the privios close,
+        percentage change with resepect to previous day."""
+        date = dateFilter(days)
+        stocks=StockPrice.objects.all().select_related('stock')
+        qs=stocks.annotate(prev_close=Window(expression=Lag('close', offset=offset), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+        .annotate(diff=F('close')-F('prev_close'))\
+        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
+        .filter(date__gte=date)
+        return qs
 
 def perodical_index(index, stocks, indices, days, offset):
     date = latest_day-timedelta(days=days)
     indexstock = index.objects.filter(indices=indices).first()
     indexcount = stocks.objects.filter(broder_id=indexstock.id).count()
-    indexstocks = mystocklist()
-    stocksectorprice = indexstocks.annotate(prev_close=Window(expression=Lag('close', offset=offset), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(date__gte=date)\
-        .filter(stock__broder_id=indexstock.id)\
+    qs =mystocklist(StockPrice,offset,days)
+    stocksectorprice=qs.filter(stock__broder_id=indexstock.id)\
         .order_by('-date', '-per_chan')[:indexcount]
-    return date, indexstock, indexcount, indexstocks, stocksectorprice
+    
+    return date, indexstock, indexcount ,stocksectorprice
 
 
 def perodical_sector(index, stocks,sec,days, offset):
-    date = latest_day-timedelta(days=days)
     sectorstock = index.objects.filter(sector=sec).first()
     sectorcount = stocks.objects.filter(sector=sectorstock.id).count()
-    sectorstocks = mystocklist()
-    stocksectorprice = sectorstocks.annotate(prev_close=Window(expression=Lag('close',offset=offset), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(date__gte=date)\
-        .filter(stock__sector_id=sectorstock.id)\
+    qs =mystocklist(StockPrice,offset,days)
+    stocksectorprice=qs.filter(stock__sector_id=sectorstock.id)\
         .order_by('-date', '-per_chan')[:sectorcount]
     return sectorcount, sectorstock, stocksectorprice
 
-def perodical_mainsector(index, stocks,sec,days, offset):
-    date = latest_day-timedelta(days=days)
+def perodical_mainsector(index, stocks,sec,days,offset):
     sectorstock = index.objects.filter(sector=sec).first()
     sectorcount = stocks.objects.filter(sectorial_index=sectorstock.id).count()
-    sectorstocks = StockPrice.objects.all().select_related('stock')
-    stocksectorprice = sectorstocks.annotate(prev_close=Window(expression=Lag('close',offset=offset), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(date__gte=date)\
-        .filter(stock__sectorial_index_id=sectorstock.id)\
+    qs =mystocklist(StockPrice,offset,days)
+    stocksectorprice=qs.filter(stock__sectorial_index_id=sectorstock.id)\
         .order_by('-date', '-per_chan')[:sectorcount]
 
     return sectorcount, sectorstock, stocksectorprice
 
-
-def stocklist_sectorial(number):
-    mystocks = mystocklist()
-    qs = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(stock__sectorial_index_id=number)\
-        .filter(date__gte=last_day)\
-        .order_by('-per_chan')
-    return qs
-
-
-def index_sector_price(index, id):
+def index_sector_price(index,id):
 
     indexprice = index.annotate(prev_close=Window(expression=Lag('close'), partition_by=F(id), order_by=F('date').asc(),))\
         .annotate(diff=F('close')-F('prev_close'))\
@@ -173,25 +118,20 @@ def index_sector_price(index, id):
     return indexprice
 
 
-def broader_index_deatils(number):
-    mystocks = mystocklist()
-    qs = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-        .filter(stock__broder_id=number)\
-        .filter(date__gte=last_day)\
-        .order_by('-per_chan')
-
+def stocklist_sectorial(number,offset=1,days=1):
+    mystocks = mystocklist(StockPrice,offset,days)
+    qs = mystocks.filter(stock__sectorial_index_id=number).order_by('-date','-per_chan')
     return qs
 
-def mainpage_details():
-    mystocks = mystocklist()
-    qs = mystocks.annotate(prev_close=Window(expression=Lag('close'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-            .annotate(diff=F('close')-F('prev_close'))\
-            .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
-            .filter(date__gte=last_day).order_by('-per_chan')
+def broader_index_deatils(number,offset=1,days=1):
+    mystocks = mystocklist(StockPrice,offset,days)
+    qs = mystocks.filter(stock__broder_id=number).order_by('-date','-per_chan')#[:bordercount]
     return qs
 
+def mainpage_details(offset=1,days=1):
+    mystocks = mystocklist(StockPrice,offset,days)
+    qs = mystocks.order_by('-date','-per_chan')
+    return qs
 
 
 def mainpage_dropdown(option):

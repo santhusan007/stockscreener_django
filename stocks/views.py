@@ -24,21 +24,19 @@ def StockListView(request):
     form = StockOptionForm(request.POST or None)
     options = request.POST.get("options")
     # print(form)
-    mystocks = mystocklist()
-
+    
     if options :
-        qs = mainpage_dropdown(options)
-        
+        qs = mainpage_dropdown(options)        
     else:
         qs = mainpage_details()
         # if else replace with dictionery
 
-    stocks = qs
+    
     broders = BroaderIndex.objects.all().order_by('indices')
     sectors = Sector.objects.all().order_by('sector')
     sector_index = SectorialIndex.objects.all().order_by('sector')
 
-    context = {'stocks': stocks, 'form': form, 'sectors': sectors,
+    context = {'stocks': qs, 'form': form, 'sectors': sectors,
                'broders': broders, 'sector_index': sector_index,'latest_day':latest_day }
 
     return render(request, "stocks/stocks_list.html", context)
@@ -238,14 +236,14 @@ def heatmap_index(request, indices):
                 myindex = perodical_index(BroaderIndex, Stocks, indices, days=200, offset=135)
         elif heatmap=="1year":
                 myindex = perodical_index(BroaderIndex, Stocks, indices, days=400, offset=260)
-        context = {"stocksectorprice": myindex[4],
+        context = {"stocksectorprice": myindex[3],
                "sectorstock": myindex[1], "indexcount": myindex[2],"heatmap":heatmap}
         return render(request, 'stocks/heatmap_index.html', context)
                 
     else:
         myindex = perodical_index(BroaderIndex, Stocks, indices, days=1, offset=1)
             
-        context = {"stocksectorprice": myindex[4],
+        context = {"stocksectorprice": myindex[3],
                "sectorstock": myindex[1], "indexcount": myindex[2]}
         return render(request, 'stocks/heatmap_index.html', context)
  
