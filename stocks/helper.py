@@ -6,7 +6,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import register_adapter, AsIs
 import pandas as pd
-from .models import BroaderIndex, StockPrice
+from .models import BroaderIndex, StockPrice,Stocks
 from datetime import timedelta
 from django.db.models.functions import Lag, Round
 from django.db.models import F, Window, Q,Max,Min,Count
@@ -35,13 +35,10 @@ def data_base():
 
 
 def present_day():
-
     c = data_base()
     c.execute(""" SELECT max(date) as date from stock_price""")
-
     last_date = c.fetchone()
     latest_date = last_date['date']
-
     return latest_date
 
 
@@ -67,27 +64,26 @@ def dateFilter(days):
     if days==1:
         return last_day
     return latest_day-timedelta(days=days)
+        
 
 def mystocklist(stocks,offset,days):
         """function to filter the stock / index price query set with annotate the privios close,
         percentage change with resepect to previous day."""
         date = dateFilter(days)
-        stocks=StockPrice.objects.all().select_related('stock')
-        qs=stocks.annotate(prev_close=Window(expression=Lag('close', offset=offset), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+        stocklist=stocks.objects.all().select_related('stock')
+        qs=stocklist.annotate(prev_close=Window(expression=Lag('close', offset=offset), partition_by=F("stock_id"), order_by=F('date').asc(),))\
         .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
+        .annotate(per_chan=Round(F('diff')/F('prev_close')*100, 2))\
         .filter(date__gte=date)
         return qs
 
 def perodical_index(index, stocks, indices, days, offset):
-    date = latest_day-timedelta(days=days)
     indexstock = index.objects.filter(indices=indices).first()
     indexcount = stocks.objects.filter(broder_id=indexstock.id).count()
     qs =mystocklist(StockPrice,offset,days)
     stocksectorprice=qs.filter(stock__broder_id=indexstock.id)\
-        .order_by('-date', '-per_chan')[:indexcount]
-    
-    return date, indexstock, indexcount ,stocksectorprice
+        .order_by('-date', '-per_chan')[:indexcount]    
+    return  indexstock, indexcount ,stocksectorprice
 
 
 def perodical_sector(index, stocks,sec,days, offset):
@@ -104,17 +100,14 @@ def perodical_mainsector(index, stocks,sec,days,offset):
     qs =mystocklist(StockPrice,offset,days)
     stocksectorprice=qs.filter(stock__sectorial_index_id=sectorstock.id)\
         .order_by('-date', '-per_chan')[:sectorcount]
-
     return sectorcount, sectorstock, stocksectorprice
 
 def index_sector_price(index,id):
-
     indexprice = index.annotate(prev_close=Window(expression=Lag('close'), partition_by=F(id), order_by=F('date').asc(),))\
         .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('close')*100, 2))\
+        .annotate(per_chan=Round(F('diff')/F('prev_close')*100, 2))\
         .filter(date__gte=last_day)\
         .order_by('-per_chan')
-
     return indexprice
 
 
@@ -151,3 +144,66 @@ def mainpage_dropdown(option):
     if option in options:
         qs = options[option]
         return qs
+
+
+def fivedaydown():
+    sqlquery="""
+    SELECT  id,stock_id,symbol,close,Prev_close,fivedaysago,fivedays_Rtn from
+                (
+                SELECT stocks.ID,stocks.symbol,close ,date,stock_id,
+                lag(close) over (PARTITION BY stock_id ORDER BY date) AS Prev_close,
+                lag(close,4) over (PARTITION BY stock_id ORDER BY date) as fivedaysago,
+                round((close-lag(close,4) over (PARTITION BY stock_id ORDER BY date) )/
+                lag(close,4) over (PARTITION BY stock_id ORDER BY date)*100,2) as fivedays_Rtn,
+                CASE 
+                        WHEN 
+                        lag(close) over (PARTITION BY stock_id ORDER BY date) > close AND
+                        lag(close,2) over (PARTITION BY stock_id ORDER BY date) > lag(close) over (PARTITION BY stock_id ORDER BY date) AND
+                        lag(close,3) over (PARTITION BY stock_id ORDER BY date) > lag(close,2) over (PARTITION BY stock_id ORDER BY date) AND
+                        lag(close,4) over (PARTITION BY stock_id ORDER BY date) > lag(close,3) over (PARTITION BY stock_id ORDER BY date) 
+                        
+                        
+                        THEN 'yes' ELSE NULL 
+                END gap
+                        
+                FROM
+                stocks JOIN stock_price ON stocks.ID = stock_price.stock_id
+                            
+                WHERE date BETWEEN (select date(max(date)+ INTERVAL'-10 day') FROM stock_price)
+                AND (select max(date) FROM stock_price)) as foo WHERE gap='yes' AND date=(select max(date) FROM stock_price)
+				ORDER BY 5 limit 5
+    
+    """
+    qs=StockPrice.objects.raw(sqlquery)
+    return qs
+
+def fivedayup():
+    sqlquery="""
+        SELECT id,stock_id,symbol,close,Prev_close,fivedaysago,fivedays_Rtn from (
+                SELECT stocks.ID,stock_id,stocks.symbol,close ,date,
+                lag(close) over (PARTITION BY stock_id ORDER BY date) AS Prev_close,
+                lag(close,4) over (PARTITION BY stock_id ORDER BY date) as fivedaysago,
+                round((close-lag(close,4) over (PARTITION BY stock_id ORDER BY date) )/
+                lag(close,4) over (PARTITION BY stock_id ORDER BY date)*100,2) as fivedays_Rtn,
+                CASE 
+                        WHEN 
+                        lag(close) over (PARTITION BY stock_id ORDER BY date) < close AND
+                        lag(close,2) over (PARTITION BY stock_id ORDER BY date) < lag(close) over (PARTITION BY stock_id ORDER BY date) AND
+                        lag(close,3) over (PARTITION BY stock_id ORDER BY date) < lag(close,2) over (PARTITION BY stock_id ORDER BY date) AND
+                        lag(close,4) over (PARTITION BY stock_id ORDER BY date) < lag(close,3) over (PARTITION BY stock_id ORDER BY date) 
+                        
+                        
+                        THEN 'yes' ELSE NULL 
+                END gap
+                        
+                    FROM
+                        stocks JOIN stock_price ON stocks.id = stock_price.stock_id
+                            
+                WHERE date BETWEEN (select date(max(date) +INTERVAL '-10 day') FROM stock_price)
+                AND (select max(date) FROM stock_price)) as bar WHERE gap='yes' AND date=(select max(date) FROM stock_price) ORDER BY 5 
+                 desc limit 5  
+
+    """
+
+    qs=StockPrice.objects.raw(sqlquery)
+    return qs

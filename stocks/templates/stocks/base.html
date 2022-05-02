@@ -62,21 +62,21 @@
 
 <a class="text-white" href="{% url 'stocks:index-heatmap' broder.indices %}" target="_blank">
   <button class="w-30  float-none bg-blue-500 text-white hover:bg-blue-600 my-1 px-1 py-1 rounded-lg" >
-  {{broder.indices}}</a>	</button>
+  {{broder.indices  | title}}</a>	</button>
   
 {% endfor %}
 
 {% for sector  in sector_index  %}
 <a class="text-white" href="{% url 'stocks:sector-heatmap' sector.sector %}" target="_blank">
   <button class="w-30  float-none bg-blue-500 text-white hover:bg-blue-600 my-1 px-1 py-1 rounded-lg" >
-  {{sector.sector}}</a>	</button>
+  {{sector.sector  | title}}</a>	</button>
   
 {% endfor %}
 
 {% for sec in sectors %}
 	<a class="text-white" href="{% url 'stocks:stock-heatmap' sec.sector %}" target="_blank">
 	  <button class="w-30  float-none bg-blue-500 text-white hover:bg-blue-600 my-1 px-1 py-1 rounded-lg" >
-		{{sec.sector}}</a>
+		{{sec.sector | title}}</a>
 
 	</button>
 

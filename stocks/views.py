@@ -1,5 +1,4 @@
-from django.db.models.functions import Lag, Round
-from django.db.models import F, Window, Q
+from django.db.models import  Q
 import talib
 from plotly.graph_objs import Scatter
 from plotly.offline import plot
@@ -12,7 +11,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 import pandas as pd
 import quantstats as qs
 from .helper import (perodical_index, perodical_sector,present_day, prev_day,
-                     index_sector_price, mainpage_dropdown, mystocklist, 
+                     index_sector_price, mainpage_dropdown,
                      mainpage_details,perodical_mainsector)
 qs.extend_pandas()
 
@@ -122,8 +121,7 @@ def stock_scanner(request):
             temp = main_df.loc[index, 'symbol']
             # print(temp)
             symbol.append(temp)
-            df = main_df.loc[main_df['symbol'] ==
-                             ticker][['open', 'high', 'low', 'close']]
+            df = main_df.loc[main_df['symbol'] ==ticker][['open', 'high', 'low', 'close']]
 
             pattern_fun = getattr(talib, options)
             try:
@@ -163,20 +161,18 @@ def heatmap_sector(request, sector):
     
     if request.method=='POST':
         heatmap=request.POST.get("heatmap")
-        print(heatmap)
-
         if heatmap=="1day":
             mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=1, offset=1)
         elif heatmap=="1week":
-            mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=10, offset=6)
+            mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=25, offset=6)
         elif heatmap=="1month":
-           mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=35, offset=23)
+           mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=40, offset=23)
         elif heatmap=="3month":
-           mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=105, offset=68)
+           mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=120, offset=68)
         elif heatmap=="6month":
-            mysector= perodical_mainsector(SectorialIndex, Stocks, sector, days=200, offset=135)
+            mysector= perodical_mainsector(SectorialIndex, Stocks, sector, days=240, offset=135)
         elif heatmap=="1year":
-            mysector =perodical_mainsector(SectorialIndex, Stocks, sector, days=400, offset=260)
+            mysector =perodical_mainsector(SectorialIndex, Stocks, sector, days=440, offset=260)
            
         context = {"stocksectorprice": mysector[2],
                 "sectorstock": mysector[1],"heatmap":heatmap}
@@ -194,19 +190,18 @@ def heatmap_stocks(request, sector):
     if request.method=='POST':
         heatmap=request.POST.get("heatmap")
         print(heatmap)
-
         if heatmap=="1day":
             mysector = perodical_sector(Sector, Stocks, sector, days=1, offset=1)
         elif heatmap=="1week":
-            mysector = perodical_sector(Sector, Stocks, sector, days=10, offset=6)
+            mysector = perodical_sector(Sector, Stocks, sector, days=25, offset=6)
         elif heatmap=="1month":
-           mysector = perodical_sector(Sector, Stocks, sector, days=35, offset=23)
+           mysector = perodical_sector(Sector, Stocks, sector, days=40, offset=23)
         elif heatmap=="3month":
-           mysector = perodical_sector(Sector, Stocks, sector, days=105, offset=68)
+           mysector = perodical_sector(Sector, Stocks, sector, days=120, offset=68)
         elif heatmap=="6month":
-            mysector= perodical_sector(Sector, Stocks, sector, days=200, offset=135)
+            mysector= perodical_sector(Sector, Stocks, sector, days=240, offset=135)
         elif heatmap=="1year":
-            mysector =perodical_sector(Sector, Stocks, sector, days=400, offset=260)
+            mysector =perodical_sector(Sector, Stocks, sector, days=420, offset=260)
            
         context = {"stocksectorprice": mysector[2],
                 "sectorstock": mysector[1],"heatmap":heatmap}
@@ -227,24 +222,24 @@ def heatmap_index(request, indices):
         if heatmap=="1day":
                 myindex = perodical_index(BroaderIndex, Stocks, indices, days=1, offset=1)
         elif heatmap=="1week":
-                myindex = perodical_index(BroaderIndex, Stocks, indices, days=10, offset=6)
+                myindex = perodical_index(BroaderIndex, Stocks, indices, days=25, offset=6)
         elif heatmap=="1month":
-                myindex = perodical_index(BroaderIndex, Stocks, indices, days=35, offset=23)
+                myindex = perodical_index(BroaderIndex, Stocks, indices, days=40, offset=23)
         elif heatmap=="3month":
-                myindex = perodical_index(BroaderIndex, Stocks, indices, days=105, offset=68)
+                myindex = perodical_index(BroaderIndex, Stocks, indices, days=125, offset=68)
         elif heatmap=="6month":
-                myindex = perodical_index(BroaderIndex, Stocks, indices, days=200, offset=135)
+                myindex = perodical_index(BroaderIndex, Stocks, indices, days=240, offset=135)
         elif heatmap=="1year":
-                myindex = perodical_index(BroaderIndex, Stocks, indices, days=400, offset=260)
-        context = {"stocksectorprice": myindex[3],
-               "sectorstock": myindex[1], "indexcount": myindex[2],"heatmap":heatmap}
+                myindex = perodical_index(BroaderIndex, Stocks, indices, days=420, offset=260)
+        context = {"stocksectorprice": myindex[2],
+               "sectorstock": myindex[0], "indexcount": myindex[1],"heatmap":heatmap}
         return render(request, 'stocks/heatmap_index.html', context)
                 
     else:
         myindex = perodical_index(BroaderIndex, Stocks, indices, days=1, offset=1)
             
-        context = {"stocksectorprice": myindex[3],
-               "sectorstock": myindex[1], "indexcount": myindex[2]}
+        context = {"stocksectorprice": myindex[2],
+               "sectorstock": myindex[0], "indexcount": myindex[1]}
         return render(request, 'stocks/heatmap_index.html', context)
  
 def index_sector(request):
