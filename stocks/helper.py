@@ -10,6 +10,7 @@ from .models import BroaderIndex, StockPrice,Stocks
 from datetime import timedelta
 from django.db.models.functions import Lag, Round
 from django.db.models import F, Window, Q,Max,Min,Count
+from django.db.models import Case, Value, When
 
 
 NAME = settings.NAME
@@ -206,4 +207,19 @@ def fivedayup():
     """
 
     qs=StockPrice.objects.raw(sqlquery)
+    return qs
+
+def bearishEngulf(days=1):
+    date = dateFilter(days)
+    stocklist=StockPrice.objects.all().select_related('stock')
+    qs=stocklist\
+    .annotate(prev_close=Window(expression=Lag('close'),    partition_by=F("stock_id"),order_by=F('date').asc(),))\
+    .annotate(prev_high=Window(expression=Lag('high'),partition_by=F("stock_id"),order_by=F('date').asc(),))\
+    .annotate(prev_low=Window(expression=Lag('low'),partition_by=F("stock_id"),order_by=F('date').asc(),))\
+    .annotate(prev_open=Window(expression=Lag('open'),partition_by=F("stock_id"),order_by=F('date').asc(),))\
+    .annotate(prev_volume=Window(expression=Lag('volume'),partition_by=F("stock_id"),order_by=F('date').asc(),))\
+    .annotate(diff=F('close')-F('prev_close')).annotate(per_chan=Round(F('diff')/F('prev_close')*100, 2))\
+    .annotate(diffvolume=F('volume')-F('prev_volume')).annotate(vol_change=Round(F('diffvolume')/F('prev_volume')*100, 2))\
+    .annotate(engulf=Case(When(Q(prev_high__lt=F('high')) & Q (prev_open__lt=F('open')) & Q(prev_close__gt=F('close')) & Q (prev_low__gt=F('low')) & Q(prev_volume__lt=F('volume')) ,then=Value("Yes")),defalut=Value("No")))\
+    .filter(date__gte=date)
     return qs

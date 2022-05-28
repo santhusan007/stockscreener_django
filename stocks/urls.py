@@ -8,6 +8,7 @@ urlpatterns = [
     path('', views.StockListView, name='stock-list'),
     path('stocks/index_sector', views.index_sector, name='index-sector'),
     path('stocks/scanner/', views.stock_scanner, name='stock-scanner'),
+    path('stocks/engulfing',views.bearishengulfing,name='engulfing'),
     path('stocks/chart/', views.chart, name='stock-chart'),
     path('stocks/<str:symbol>/', views.stock_detail, name='stock-detail'),
     path('stocks/return/<str:company>/',

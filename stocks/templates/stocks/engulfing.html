@@ -1,0 +1,21 @@
+{% extends "stocks/base.html" %}
+{% load tailwind_filters %}
+
+{% block content %}
+
+{% for stock in stocks  %}
+
+{% if stock.engulf is not None %}
+
+{{stock.stock.symbol}}
+ {{stock.stock.company}}
+  
+
+{% endif %}
+{% endfor %}
+
+
+{% endblock %}
+
+
+

@@ -12,7 +12,7 @@ import pandas as pd
 import quantstats as qs
 from .helper import (perodical_index, perodical_sector,present_day, prev_day,
                      index_sector_price, mainpage_dropdown,
-                     mainpage_details,perodical_mainsector)
+                     mainpage_details,perodical_mainsector,bearishEngulf)
 qs.extend_pandas()
 
 latest_day = present_day()
@@ -281,3 +281,8 @@ def chart(request):
                              opacity=0.8, marker_color='green')],
                     output_type='div', show_link=False, link_text="")
     return render(request, "stocks/index1.html", context={'plot_div': plot_div})
+
+def bearishengulfing(request):
+    qs=bearishEngulf(days=1)
+    context={"stocks":qs}
+    return render(request,"stocks/engulfing.html",context)
