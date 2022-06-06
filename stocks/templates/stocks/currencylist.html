@@ -1,0 +1,110 @@
+{% extends "stocks/base.html" %}
+{% load tailwind_filters %}
+
+
+{% block content %}
+
+<div id="container" style="width:100%";class="mx-auto px-10 py-10">
+<div id="left" style="float:left; width:50%;">
+<div class="max-w-lg w-full ">
+  <h5>Date: {{ latest_day }}</h5>
+   
+  {% comment %}
+    
+  
+    <form action="" method="POST">
+        {% csrf_token %}
+        {{form|crispy}}
+        
+        <button type="submit" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">submit </button>
+        
+    </form>
+
+    {% endcomment %}
+</div>
+
+</div>
+<div id="right" style="float:right; width:50%";class=" px-10 py-10">
+    <form method="get">
+    <input class="mt-6 rounded-lg " type="text" id="myInput" 
+        onkeyup="myFunction()" placeholder="Search for stock names.." title="Type in a name">
+        </form>
+     
+        </div>
+    
+   </div>
+        
+
+  <div>
+
+    
+
+        <table class="table-auto"  width="100%" id="myTable1" >
+            <thead>
+                <tr>
+                    <th data-type="string">Symbol</th>
+                    <th data-type="number">Close</th>
+                     <th data-type="number">Last_close</th>
+                    <!-- <th data-type="number">52WH</th>
+                    <th data-type="number">52WL</th> -->
+                   <th data-type="number">% Change</th>
+                   
+                  
+                </tr>
+            </thead>
+            <tbody>
+                {% for currency in currencydetail %}
+                {% if currency.diff is not None %}
+                <tr>
+                  <td><a href="{% url 'stocks:currency-detail' currency.cur.cur_symbol %}" target="_blank" >{{currency.cur.cur_symbol}}</a></td>
+                    <td>{{currency.rate}}</td>
+                    <td>{{currency.prev_close}}</td>
+                    <!-- <td>{{stock.yearhigh}}</td>
+                    <td>{{stock.yearlow}}</td> -->
+                    {% if currency.per_chan >= 0 %}
+                    <td style="color: green;">{{currency.per_chan}}</td>
+                    {% else %}
+                    <td style="color: red;">{{currency.per_chan}}</td>
+                    {% endif %}
+                    
+                   
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        </div>
+
+        <!--script type="text/javascript">
+
+            $(document).ready( function () {
+                 $('#table_id').DataTable();
+                } );
+
+
+      
+        </script-->
+<script>  
+function myFunction() {
+            var input, filter, table, tr, td, i;
+              input = document.getElementById("myInput");
+              filter = input.value.toUpperCase();
+              table = document.getElementById("myTable1");
+              tr = table.getElementsByTagName("tr");
+              for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[0]; // for column one
+                 td1 = tr[i].getElementsByTagName("td")[1]; // for column two
+            /* ADD columns here that you want you to filter to be used on */
+                if (td) {
+                  if ( (td.innerHTML.toUpperCase().indexOf(filter) > -1) || (td1.innerHTML.toUpperCase().indexOf(filter) > -1) )  {            
+                    tr[i].style.display = "";
+                  } else {
+                    tr[i].style.display = "none";
+                  }
+                }
+              }
+            } 
+                        
+</script>
+{% endblock %}    

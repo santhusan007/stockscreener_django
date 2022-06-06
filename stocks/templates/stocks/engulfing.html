@@ -3,16 +3,49 @@
 
 {% block content %}
 
-{% for stock in stocks  %}
+<h2><b>Bearish</b></h2>
+
+{% for stock in bearish  %}
 
 {% if stock.engulf is not None %}
+<a href="{% url 'stocks:stock-detail' stock.stock.symbol %}" target="_blank">{{stock.stock.symbol}}</a>
 
-{{stock.stock.symbol}}
- {{stock.stock.company}}
+ 
+ <br>
   
 
 {% endif %}
 {% endfor %}
+
+<h2><b>Bullish </b></h2>
+
+{% for stock in bullish  %}
+
+{% if stock.engulf is not None %}
+<a href="{% url 'stocks:stock-detail' stock.stock.symbol %}" target="_blank">{{stock.stock.symbol}}</a>
+
+ 
+ <br>
+  
+
+{% endif %}
+{% endfor %}
+
+<h2><b>VolBUzzers</b></h2>
+
+{% for stock in vol  %}
+
+{% if stock.vol is not None %}
+<a href="{% url 'stocks:stock-detail' stock.stock.symbol %}" target="_blank">{{stock.stock.symbol}}</a>
+{{stock.vol_change}}
+
+ 
+ <br>
+  
+
+{% endif %}
+{% endfor %}
+
 
 
 {% endblock %}

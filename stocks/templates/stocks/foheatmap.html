@@ -30,11 +30,13 @@
   }
 </style>
 
+  
+
 {% if request.POST %}
-<h1> Map of {{sectorstock.sector}} stocks for {{heatmap}} By Price Change % </h1>
+<h1> Map of FNO listed stocks for {{heatmap}} By Price Change % </h1>
 <br>
 {% else %}
-<h1> Map of {{sectorstock.sector}} stocks for daily By Price Change % </h1>
+<h1> Map of FNO listed stocks stocks for daily By Price Change % </h1>
 <br>
 {% endif %}
 
@@ -42,19 +44,22 @@
   {% csrf_token %}
 
 <button type="submit" value="1day" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1day </button>
-<button type="submit" value="1week" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1week </button>
+ <button type="submit" value="1week" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1week </button>
 <button type="submit" value="1month" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1month </button>
 <button type="submit" value="3month" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">3month</button>
 <button type="submit" value="6month" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">6month </button>
 <button type="submit" value="1year" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1Year </button>
 </form>
 
-{{ val }}
+{% comment %}
+  
 
+{{ val }}
+{% endcomment %}
 
 <table>
   
-  {% for stock in stocksectorprice %}
+  {% for stock in fostocks %}
   <tbody>
     <tr>
   {% if stock.per_chan < -4 %} 
@@ -172,11 +177,5 @@
 
 
 </table>
-
-
-
-
-
-
 
 {% endblock %}

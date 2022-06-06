@@ -1,0 +1,77 @@
+{% extends "stocks/base.html" %}
+{% load tailwind_filters %}
+
+{% block content %}
+
+
+<div>
+
+
+        <table class="min-w-full">
+          <thead class="border-b">
+                    
+            
+            <tr>
+              
+              <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                Date          </th>
+              
+		    <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                CSP  </th>
+            
+            <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                    Fut  </th>
+            <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                        Stock  </th>
+            <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">
+                            %Change  </th>
+
+            
+            
+
+			
+              </tr>
+              </thead>
+              
+        {% for copper in page_obj %}
+        
+        <tbody>
+          <tr class="border-b">
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{copper.date}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{copper.cu_csp}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{copper.cu_fut}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{copper.cu_stock}}</td>
+              <td class="text-sm text-gray-900 font-light px-6 py-4 whitespace-nowrap"> {{copper.per_chan_csp}}</td>
+             
+    
+              
+               
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+ 
+
+  
+
+    <div class="pagination">
+      <span class="step-links">
+        {% if page_obj.has_previous %}
+        <a href="?page=1">&laquo; first</a>
+        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+    
+        <span class="current">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+    
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+      </span>
+    </div>
+    
+{% endblock %}

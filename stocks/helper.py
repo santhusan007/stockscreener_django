@@ -6,10 +6,10 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import register_adapter, AsIs
 import pandas as pd
-from .models import BroaderIndex, StockPrice,Stocks
+from .models import BroaderIndex, StockPrice, Stocks, FoStatus, Currency, RbiExchange
 from datetime import timedelta
 from django.db.models.functions import Lag, Round
-from django.db.models import F, Window, Q,Max,Min,Count
+from django.db.models import F, Window, Q, Max, Min, Count, Func
 from django.db.models import Case, Value, When
 
 
@@ -57,53 +57,64 @@ def prev_day(latest_d):
             break
         else:
             i += 1
+
+
 latest_day = present_day()
 last_day = prev_day(latest_day)
 
 
 def dateFilter(days):
-    if days==1:
+    if days == 1:
         return last_day
     return latest_day-timedelta(days=days)
-        
 
-def mystocklist(stocks,offset,days):
-        """function to filter the stock / index price query set with annotate the privios close,
-        percentage change with resepect to previous day."""
-        date = dateFilter(days)
-        stocklist=stocks.objects.all().select_related('stock')
-        qs=stocklist.annotate(prev_close=Window(expression=Lag('close', offset=offset), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+
+def mystocklist(stocks, offset, days):
+    """function to filter the stock / index price query set with annotate the privios close,
+    percentage change with resepect to previous day."""
+    date = dateFilter(days)
+    stocklist = stocks.objects.all().select_related('stock')
+    qs = stocklist.annotate(prev_close=Window(expression=Lag('close', offset=offset), partition_by=F("stock_id"), order_by=F('date').asc(),))\
         .annotate(diff=F('close')-F('prev_close'))\
         .annotate(per_chan=Round(F('diff')/F('prev_close')*100, 2))\
+        .annotate(prev_high=Window(expression=Lag('high'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+        .annotate(prev_low=Window(expression=Lag('low'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+        .annotate(prev_open=Window(expression=Lag('open'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+        .annotate(prev_volume=Window(expression=Lag('volume'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
+        .annotate(diffvolume=F('volume')-F('prev_volume')).annotate(vol_change=Round(F('diffvolume')/F('prev_volume')*100, 2))\
+        .annotate(realbody=Func(F('open')-F('close'), function='ABS')) . annotate(day_range=F('high')-F('low'))\
         .filter(date__gte=date)
-        return qs
+    return qs
+
 
 def perodical_index(index, stocks, indices, days, offset):
     indexstock = index.objects.filter(indices=indices).first()
     indexcount = stocks.objects.filter(broder_id=indexstock.id).count()
-    qs =mystocklist(StockPrice,offset,days)
-    stocksectorprice=qs.filter(stock__broder_id=indexstock.id)\
-        .order_by('-date', '-per_chan')[:indexcount]    
-    return  indexstock, indexcount ,stocksectorprice
+    qs = mystocklist(StockPrice, offset, days)
+    stocksectorprice = qs.filter(stock__broder_id=indexstock.id)\
+        .order_by('-date', '-per_chan')[:indexcount]
+    return indexstock, indexcount, stocksectorprice
 
 
-def perodical_sector(index, stocks,sec,days, offset):
+def perodical_sector(index, stocks, sec, days, offset):
     sectorstock = index.objects.filter(sector=sec).first()
     sectorcount = stocks.objects.filter(sector=sectorstock.id).count()
-    qs =mystocklist(StockPrice,offset,days)
-    stocksectorprice=qs.filter(stock__sector_id=sectorstock.id)\
+    qs = mystocklist(StockPrice, offset, days)
+    stocksectorprice = qs.filter(stock__sector_id=sectorstock.id)\
         .order_by('-date', '-per_chan')[:sectorcount]
     return sectorcount, sectorstock, stocksectorprice
 
-def perodical_mainsector(index, stocks,sec,days,offset):
+
+def perodical_mainsector(index, stocks, sec, days, offset):
     sectorstock = index.objects.filter(sector=sec).first()
     sectorcount = stocks.objects.filter(sectorial_index=sectorstock.id).count()
-    qs =mystocklist(StockPrice,offset,days)
-    stocksectorprice=qs.filter(stock__sectorial_index_id=sectorstock.id)\
+    qs = mystocklist(StockPrice, offset, days)
+    stocksectorprice = qs.filter(stock__sectorial_index_id=sectorstock.id)\
         .order_by('-date', '-per_chan')[:sectorcount]
     return sectorcount, sectorstock, stocksectorprice
 
-def index_sector_price(index,id):
+
+def index_sector_price(index, id):
     indexprice = index.annotate(prev_close=Window(expression=Lag('close'), partition_by=F(id), order_by=F('date').asc(),))\
         .annotate(diff=F('close')-F('prev_close'))\
         .annotate(per_chan=Round(F('diff')/F('prev_close')*100, 2))\
@@ -112,35 +123,38 @@ def index_sector_price(index,id):
     return indexprice
 
 
-def stocklist_sectorial(number,offset=1,days=1):
-    mystocks = mystocklist(StockPrice,offset,days)
-    qs = mystocks.filter(stock__sectorial_index_id=number).order_by('-date','-per_chan')
+def stocklist_sectorial(number, offset=1, days=1):
+    mystocks = mystocklist(StockPrice, offset, days)
+    qs = mystocks.filter(stock__sectorial_index_id=number).order_by(
+        '-date', '-per_chan')
     return qs
 
-def broader_index_deatils(number,offset=1,days=1):
-    mystocks = mystocklist(StockPrice,offset,days)
-    qs = mystocks.filter(stock__broder_id=number).order_by('-date','-per_chan')#[:bordercount]
+
+def broader_index_deatils(number, offset=1, days=1):
+    mystocks = mystocklist(StockPrice, offset, days)
+    qs = mystocks.filter(stock__broder_id=number).order_by(
+        '-date', '-per_chan')  # [:bordercount]
     return qs
 
-def mainpage_details(offset=1,days=1):
-    mystocks = mystocklist(StockPrice,offset,days)
-    qs = mystocks.order_by('-date','-per_chan')
+
+def mainpage_details(offset, days):
+    mystocks = mystocklist(StockPrice, offset, days)
+    qs = mystocks.order_by('-date', '-per_chan')
     return qs
 
 
 def mainpage_dropdown(option):
     options = {
-        '#1':mainpage_details(),
-        '#2': broader_index_deatils(1),
-        '#3': broader_index_deatils(3),
-        '#4': broader_index_deatils(4),
-        '#5': stocklist_sectorial(7),
-        '#6': stocklist_sectorial(3),
-        '#7': stocklist_sectorial(2),
-        '#8': stocklist_sectorial(8),
-        '#9': stocklist_sectorial(1),
-        '#10': stocklist_sectorial(5),
-
+        '#1': mainpage_details(offset=1, days=1),
+        '#2': broader_index_deatils(1, offset=1, days=1),
+        '#3': broader_index_deatils(3, offset=1, days=1),
+        '#4': broader_index_deatils(4, offset=1, days=1),
+        '#5': stocklist_sectorial(7, offset=1, days=1),
+        '#6': stocklist_sectorial(3, offset=1, days=1),
+        '#7': stocklist_sectorial(2, offset=1, days=1),
+        '#8': stocklist_sectorial(8, offset=1, days=1),
+        '#9': stocklist_sectorial(1, offset=1, days=1),
+        '#10': stocklist_sectorial(5, offset=1, days=1),
     }
     if option in options:
         qs = options[option]
@@ -148,7 +162,7 @@ def mainpage_dropdown(option):
 
 
 def fivedaydown():
-    sqlquery="""
+    sqlquery = """
     SELECT  id,stock_id,symbol,close,Prev_close,fivedaysago,fivedays_Rtn from
                 (
                 SELECT stocks.ID,stocks.symbol,close ,date,stock_id,
@@ -175,11 +189,13 @@ def fivedaydown():
 				ORDER BY 5 limit 5
     
     """
-    qs=StockPrice.objects.raw(sqlquery)
+    qs = StockPrice.objects.raw(sqlquery)
     return qs
 
+
 def fivedayup():
-    sqlquery="""
+
+    sqlquery = """
         SELECT id,stock_id,symbol,close,Prev_close,fivedaysago,fivedays_Rtn from (
                 SELECT stocks.ID,stock_id,stocks.symbol,close ,date,
                 lag(close) over (PARTITION BY stock_id ORDER BY date) AS Prev_close,
@@ -206,20 +222,74 @@ def fivedayup():
 
     """
 
-    qs=StockPrice.objects.raw(sqlquery)
+    qs = StockPrice.objects.raw(sqlquery)
     return qs
 
-def bearishEngulf(days=1):
+
+def bearishEngulf():
+
+    bearishlist = mystocklist(StockPrice, 1, 1)
+    qs = bearishlist\
+        .annotate(engulf=Case(When(
+            Q(prev_high__lt=F('high')) & Q(prev_low__gt=F('low')) &
+            Q(open__gt=F('close')) & Q(realbody__gte=F('day_range')*0.5) & Q(vol_change__gt=200), then=Value("Yes")), defalut=Value("No")))
+
+    return qs
+
+
+def bullishEngulf():
+
+    bullishlist = mystocklist(StockPrice, 1, 1)
+    qs = bullishlist\
+        .annotate(engulf=Case(When(
+            Q(prev_high__lt=F('high')) & Q(prev_low__gt=F('low')) &
+            Q(open__lt=F('close')) & Q(realbody__gte=F('day_range')*0.5) & Q(vol_change__gt=100), then=Value("Yes")), defalut=Value("No")))
+
+    return qs
+
+
+def volumebuzzers(days=1):
+
+    stocklist = mystocklist(StockPrice, 1, 1)
+    qs = stocklist.annotate(vol=Case(When(Q(vol_change__gt=300), then=Value("Yes")), defalut=Value("No")))\
+
+    return qs
+
+
+def fostocks(stocklist, offset, days):
+
+    fostocks = mystocklist(stocklist, offset, days)
+    qs = fostocks.filter(stock__fo=1).order_by('-date', '-per_chan')[:188]
+    return qs
+
+
+"""
+   lag(open) OVER (PARTITION BY stock_id ORDER BY date) > open AND
+		lag(close) over (PARTITION BY stock_id ORDER BY date) < close AND
+		lag(high) over (PARTITION BY stock_id ORDER BY date) < high AND
+		lag(low) over (PARTITION BY stock_id ORDER BY date) > low AND
+		lag(volume) over (PARTITION BY stock_id ORDER BY date) < volume
+"""
+
+
+def currencylist(RbiExchange, offset, days):
+    """function to filter the stock / index price query set with annotate the privios close,
+    percentage change with resepect to previous day."""
     date = dateFilter(days)
-    stocklist=StockPrice.objects.all().select_related('stock')
-    qs=stocklist\
-    .annotate(prev_close=Window(expression=Lag('close'),    partition_by=F("stock_id"),order_by=F('date').asc(),))\
-    .annotate(prev_high=Window(expression=Lag('high'),partition_by=F("stock_id"),order_by=F('date').asc(),))\
-    .annotate(prev_low=Window(expression=Lag('low'),partition_by=F("stock_id"),order_by=F('date').asc(),))\
-    .annotate(prev_open=Window(expression=Lag('open'),partition_by=F("stock_id"),order_by=F('date').asc(),))\
-    .annotate(prev_volume=Window(expression=Lag('volume'),partition_by=F("stock_id"),order_by=F('date').asc(),))\
-    .annotate(diff=F('close')-F('prev_close')).annotate(per_chan=Round(F('diff')/F('prev_close')*100, 2))\
-    .annotate(diffvolume=F('volume')-F('prev_volume')).annotate(vol_change=Round(F('diffvolume')/F('prev_volume')*100, 2))\
-    .annotate(engulf=Case(When(Q(prev_high__lt=F('high')) & Q (prev_open__lt=F('open')) & Q(prev_close__gt=F('close')) & Q (prev_low__gt=F('low')) & Q(prev_volume__lt=F('volume')) ,then=Value("Yes")),defalut=Value("No")))\
-    .filter(date__gte=date)
+    mycurrencylist = RbiExchange.objects.all().select_related('cur')
+    qs = mycurrencylist.annotate(prev_close=Window(expression=Lag('rate', offset=offset), partition_by=F("cur_id"), order_by=F('date').asc(),))\
+        .annotate(diff=F('rate')-F('prev_close'))\
+        .annotate(per_chan=Round(F('diff')/F('prev_close')*100, 2))\
+        .filter(date__gte=date).order_by('-date', '-per_chan')
+    return qs
+
+
+def copperdetail(commoditylist):
+    
+    mycommoditylist = commoditylist.objects.all().select_related('com')
+    qs = mycommoditylist\
+        .annotate(prev_csp=Window(expression=Lag('cu_csp'), partition_by=F("com_id"), order_by=F('date').asc(),))\
+        .annotate(diff_csp=F('cu_csp')-F('prev_csp'))\
+        .annotate(per_chan_csp=Round(F('diff_csp')/F('prev_csp')*100, 2))\
+        .order_by('-date')
     return qs

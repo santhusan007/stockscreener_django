@@ -40,14 +40,17 @@
 <body>
 	{% include 'stocks/navbar.html' %}
 	<marquee behavior="scroll" direction="left" style="color:green;"> <b>
+
 			{% for rate in dollar_rate %}
 			USD:-{{dollar_rate.rate}}
 			{% endfor %}
 			{% for rate in copper_rate %}
 			LME Cu:-{{copper_rate.rate}}
 			{% endfor %}
-			{% for sector in broders %}
-			{% if sector.indices == "Nifty 50" %}
+			
+			{% for sector in index_price %}
+			{% if sector.broader_id == 1 %}
+			
 			Nifty:-{{sector.close}}
 			{% endif %}
 			{% endfor %}

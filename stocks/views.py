@@ -4,7 +4,7 @@ from plotly.graph_objs import Scatter
 from plotly.offline import plot
 from django.shortcuts import render
 from .models import (BroaderIndex, Sector, SectorialIndex,
-                     Stocks, StockPrice, IndexPrice)
+                     Stocks, StockPrice, IndexPrice,RbiExchange, Currency,CuLmeCsp)
 from django.db import connection
 from .forms import StockOptionForm, StockScannerForm
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -12,7 +12,9 @@ import pandas as pd
 import quantstats as qs
 from .helper import (perodical_index, perodical_sector,present_day, prev_day,
                      index_sector_price, mainpage_dropdown,
-                     mainpage_details,perodical_mainsector,bearishEngulf)
+                     mainpage_details,perodical_mainsector,bearishEngulf,bullishEngulf,
+                     volumebuzzers,fostocks,currencylist,copperdetail)
+
 qs.extend_pandas()
 
 latest_day = present_day()
@@ -27,21 +29,22 @@ def StockListView(request):
     if options :
         qs = mainpage_dropdown(options)        
     else:
-        qs = mainpage_details()
+        qs = mainpage_details(offset=1,days=1)
         # if else replace with dictionery
 
     
     broders = BroaderIndex.objects.all().order_by('indices')
     sectors = Sector.objects.all().order_by('sector')
     sector_index = SectorialIndex.objects.all().order_by('sector')
+    index_price=IndexPrice.objects.filter(date=latest_day)
 
     context = {'stocks': qs, 'form': form, 'sectors': sectors,
-               'broders': broders, 'sector_index': sector_index,'latest_day':latest_day }
+               'broders': broders, 'sector_index': sector_index,'latest_day':latest_day ,"index_price":index_price}
 
     return render(request, "stocks/stocks_list.html", context)
 
 
-def stock_detail(request, symbol):
+def stock_detail(request,symbol):
 
     stock = Stocks.objects.filter(symbol=symbol).first()
     stocks = StockPrice.objects.filter(
@@ -282,7 +285,76 @@ def chart(request):
                     output_type='div', show_link=False, link_text="")
     return render(request, "stocks/index1.html", context={'plot_div': plot_div})
 
-def bearishengulfing(request):
-    qs=bearishEngulf(days=1)
-    context={"stocks":qs}
+def engulfing(request):
+    # bearish=bearishEngulf()
+    # bullish=bullishEngulf()
+    # volbuz=volumebuzzers()
+    context={"bearish":bearishEngulf,"bullish":bullishEngulf,"vol":volumebuzzers}
     return render(request,"stocks/engulfing.html",context)
+
+def fnostocks(request):
+
+    fo = fostocks(StockPrice,1,1)
+    context={"fostocks":fo,"latest_day":present_day,}    
+    return render(request,"stocks/fostocks.html",context)
+
+
+def fnoheatmap(request):
+ 
+    if request.method=='POST':
+        heatmap=request.POST.get("heatmap")
+        print(heatmap)
+        if heatmap=="1day":
+            fo = fostocks(StockPrice,  days=1, offset=1)
+        elif heatmap=="1week":
+            fo = fostocks(StockPrice, days=25, offset=6)
+        elif heatmap=="1month":
+           fo = fostocks(StockPrice,days=40, offset=23)
+        elif heatmap=="3month":
+           fo = fostocks(StockPrice, days=120, offset=68)
+        elif heatmap=="6month":
+            fo= fostocks(StockPrice,days=240, offset=135)
+        elif heatmap=="1year":
+            fo =fostocks(StockPrice, days=420, offset=260)
+
+        context={"fostocks":fo,"latest_day":present_day,"heatmap":heatmap}  
+        return render(request,"stocks/foheatmap.html",context)       
+    else:
+        fo = fostocks(StockPrice, days=1, offset=1)
+        context={"fostocks":fo,"latest_day":present_day}  
+        return render(request,"stocks/foheatmap.html",context) 
+
+def currencyiew(request):
+    currencydetail=currencylist(RbiExchange,offset=1,days=1)
+    context={"currencydetail":currencydetail,"latest_day":present_day}
+    return render(request,"stocks/currencylist.html",context) 
+
+def currency_detail(request,symbol):
+
+    currency = Currency.objects.filter(cur_symbol=symbol).first()
+    currencydetail = RbiExchange.objects.filter(cur_id=currency.id).order_by('-date').all()
+
+    context={"currency":currency,"currencydetail":currencydetail}
+    return render(request, 'stocks/currency_detail.html', context)
+
+def copper_detail(request):
+    copperlist= copperdetail(CuLmeCsp)
+    page = request.GET.get('page', 1)
+    paginator = Paginator(copperlist, 25)   
+
+    # get the page parameter from the query string
+    # if page parameter is available get() method will return empty string ''
+    # page = request.GET.get('page')
+    try:
+        # create Page object for the given page
+        page_obj = paginator.page(page)
+    except PageNotAnInteger:
+        # if page parameter in the query string is not available, return the first page
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        # if the value of the page parameter exceeds num_pages then return the last page
+        page_obj = paginator.page(paginator.num_pages)
+
+    context={"copperlist":copperlist,"page_obj":page_obj,"latest_day":latest_day}
+    return render(request, 'stocks/copper_detail.html', context)
+
