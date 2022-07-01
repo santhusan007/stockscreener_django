@@ -165,66 +165,16 @@ def mainpage_dropdown(option):
 
 
 def fivedaydown():
-    sqlquery = """
-    SELECT  id,stock_id,symbol,close,Prev_close,fivedaysago,fivedays_Rtn from
-                (
-                SELECT stocks.ID,stocks.symbol,close ,date,stock_id,
-                lag(close) over (PARTITION BY stock_id ORDER BY date) AS Prev_close,
-                lag(close,4) over (PARTITION BY stock_id ORDER BY date) as fivedaysago,
-                round((close-lag(close,4) over (PARTITION BY stock_id ORDER BY date) )/
-                lag(close,4) over (PARTITION BY stock_id ORDER BY date)*100,2) as fivedays_Rtn,
-                CASE 
-                        WHEN 
-                        lag(close) over (PARTITION BY stock_id ORDER BY date) > close AND
-                        lag(close,2) over (PARTITION BY stock_id ORDER BY date) > lag(close) over (PARTITION BY stock_id ORDER BY date) AND
-                        lag(close,3) over (PARTITION BY stock_id ORDER BY date) > lag(close,2) over (PARTITION BY stock_id ORDER BY date) AND
-                        lag(close,4) over (PARTITION BY stock_id ORDER BY date) > lag(close,3) over (PARTITION BY stock_id ORDER BY date) 
-                        
-                        
-                        THEN 'yes' ELSE NULL 
-                END gap
-                        
-                FROM
-                stocks JOIN stock_price ON stocks.ID = stock_price.stock_id
-                            
-                WHERE date BETWEEN (select date(max(date)+ INTERVAL'-10 day') FROM stock_price)
-                AND (select max(date) FROM stock_price)) as foo WHERE gap='yes' AND date=(select max(date) FROM stock_price)
-				ORDER BY 5 limit 5
+    sqlquery = """ select * from fivedaydown """   
     
-    """
     qs = StockPrice.objects.raw(sqlquery)
     return qs
 
 
 def fivedayup():
 
-    sqlquery = """
-        SELECT id,stock_id,symbol,close,Prev_close,fivedaysago,fivedays_Rtn from (
-                SELECT stocks.ID,stock_id,stocks.symbol,close ,date,
-                lag(close) over (PARTITION BY stock_id ORDER BY date) AS Prev_close,
-                lag(close,4) over (PARTITION BY stock_id ORDER BY date) as fivedaysago,
-                round((close-lag(close,4) over (PARTITION BY stock_id ORDER BY date) )/
-                lag(close,4) over (PARTITION BY stock_id ORDER BY date)*100,2) as fivedays_Rtn,
-                CASE 
-                        WHEN 
-                        lag(close) over (PARTITION BY stock_id ORDER BY date) < close AND
-                        lag(close,2) over (PARTITION BY stock_id ORDER BY date) < lag(close) over (PARTITION BY stock_id ORDER BY date) AND
-                        lag(close,3) over (PARTITION BY stock_id ORDER BY date) < lag(close,2) over (PARTITION BY stock_id ORDER BY date) AND
-                        lag(close,4) over (PARTITION BY stock_id ORDER BY date) < lag(close,3) over (PARTITION BY stock_id ORDER BY date) 
-                        
-                        
-                        THEN 'yes' ELSE NULL 
-                END gap
-                        
-                    FROM
-                        stocks JOIN stock_price ON stocks.id = stock_price.stock_id
-                            
-                WHERE date BETWEEN (select date(max(date) +INTERVAL '-10 day') FROM stock_price)
-                AND (select max(date) FROM stock_price)) as bar WHERE gap='yes' AND date=(select max(date) FROM stock_price) ORDER BY 5 
-                 desc limit 5  
-
-    """
-
+    sqlquery = """ select * from fivedayup """       
+    
     qs = StockPrice.objects.raw(sqlquery)
     return qs
 
@@ -262,17 +212,9 @@ def volumebuzzers(days=1):
 def fostocks(stocklist, offset, days):
 
     fostocks = mystocklist(stocklist, offset, days)
-    qs = fostocks.filter(stock__fo=1).order_by('-date', '-per_chan')[:187]
+    qs = fostocks.filter(stock__fo=1).order_by('-date', '-per_chan')
     return qs
 
-
-"""
-   lag(open) OVER (PARTITION BY stock_id ORDER BY date) > open AND
-		lag(close) over (PARTITION BY stock_id ORDER BY date) < close AND
-		lag(high) over (PARTITION BY stock_id ORDER BY date) < high AND
-		lag(low) over (PARTITION BY stock_id ORDER BY date) > low AND
-		lag(volume) over (PARTITION BY stock_id ORDER BY date) < volume
-"""
 
 
 def currencylist(RbiExchange, offset, days):
