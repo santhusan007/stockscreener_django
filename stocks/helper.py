@@ -1,7 +1,6 @@
 from django.conf import settings
 import os
 import datetime
-from matplotlib import offsetbox
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import register_adapter, AsIs
@@ -75,15 +74,19 @@ def mystocklist(stocks, offset, days):
     date = dateFilter(days)
     stocklist = stocks.objects.all().select_related('stock')
     qs = stocklist.annotate(prev_close=Window(expression=Lag('close', offset=offset), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('prev_close')*100, 2))\
-        .annotate(prev_high=Window(expression=Lag('high'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(prev_low=Window(expression=Lag('low'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(prev_open=Window(expression=Lag('open'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(prev_volume=Window(expression=Lag('volume'), partition_by=F("stock_id"), order_by=F('date').asc(),))\
-        .annotate(diffvolume=F('volume')-F('prev_volume')).annotate(vol_change=Round(F('diffvolume')/F('prev_volume')*100, 2))\
-        .annotate(realbody=Func(F('open')-F('close'), function='ABS')) . annotate(day_range=F('high')-F('low'))\
-        .filter(date__gte=date)
+        .annotate(diff=F('close')-F('prev_close'),
+                per_chan=Round(F('diff')/F('prev_close')*100, 2),
+                  prev_high=Window(expression=Lag('high'), partition_by=F(
+                      "stock_id"), order_by=F('date').asc()),
+                  prev_low=Window(expression=Lag('low'), partition_by=F(
+                      "stock_id"), order_by=F('date').asc()),
+                  prev_open=Window(expression=Lag('open'), partition_by=F(
+                      "stock_id"), order_by=F('date').asc()),
+                  prev_volume=Window(expression=Lag('volume'), partition_by=F(
+                      "stock_id"), order_by=F('date').asc()),
+                  diffvolume=F('volume')-F('prev_volume'), vol_change=Round(F('diffvolume')/F('prev_volume')*100, 2),
+                  realbody=Func(F('open')-F('close'), function='ABS'), day_range=F('high')-F('low'))\
+    .filter(date__gte=date)
     return qs
 
 
@@ -116,8 +119,8 @@ def perodical_mainsector(index, stocks, sec, days, offset):
 
 def index_sector_price(index, id):
     indexprice = index.annotate(prev_close=Window(expression=Lag('close'), partition_by=F(id), order_by=F('date').asc(),))\
-        .annotate(diff=F('close')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('prev_close')*100, 2))\
+        .annotate(diff=F('close')-F('prev_close'),
+        per_chan=Round(F('diff')/F('prev_close')*100, 2))\
         .filter(date__gte=last_day)\
         .order_by('-per_chan')
     return indexprice
@@ -232,7 +235,7 @@ def bearishEngulf():
     qs = bearishlist\
         .annotate(engulf=Case(When(
             Q(prev_high__lt=F('high')) & Q(prev_low__gt=F('low')) &
-            Q(open__gt=F('close')) & Q(realbody__gte=F('day_range')*0.5) & Q(vol_change__gt=200), then=Value("Yes")), defalut=Value("No")))
+            Q(open__gt=F('close')) & Q(realbody__gte=F('day_range')*0.5) & Q(vol_change__gt=100), then=Value("Yes")), defalut=Value("No")))
 
     return qs
 
@@ -251,7 +254,7 @@ def bullishEngulf():
 def volumebuzzers(days=1):
 
     stocklist = mystocklist(StockPrice, 1, 1)
-    qs = stocklist.annotate(vol=Case(When(Q(vol_change__gt=300), then=Value("Yes")), defalut=Value("No")))\
+    qs = stocklist.annotate(vol=Case(When(Q(vol_change__gt=300), then=Value("Yes")), defalut=Value("No"))).order_by('-vol_change')
 
     return qs
 
@@ -259,7 +262,7 @@ def volumebuzzers(days=1):
 def fostocks(stocklist, offset, days):
 
     fostocks = mystocklist(stocklist, offset, days)
-    qs = fostocks.filter(stock__fo=1).order_by('-date', '-per_chan')[:188]
+    qs = fostocks.filter(stock__fo=1).order_by('-date', '-per_chan')[:187]
     return qs
 
 
@@ -277,19 +280,30 @@ def currencylist(RbiExchange, offset, days):
     percentage change with resepect to previous day."""
     date = dateFilter(days)
     mycurrencylist = RbiExchange.objects.all().select_related('cur')
-    qs = mycurrencylist.annotate(prev_close=Window(expression=Lag('rate', offset=offset), partition_by=F("cur_id"), order_by=F('date').asc(),))\
-        .annotate(diff=F('rate')-F('prev_close'))\
-        .annotate(per_chan=Round(F('diff')/F('prev_close')*100, 2))\
+    qs = mycurrencylist.annotate(prev_close=Window(expression=Lag('rate', offset=offset), partition_by=F("cur_id"), order_by=F('date').asc(),),
+        diff=F('rate')-F('prev_close'),
+        per_chan=Round(F('diff')/F('prev_close')*100, 2))\
         .filter(date__gte=date).order_by('-date', '-per_chan')
     return qs
 
 
 def copperdetail(commoditylist):
-    
+
     mycommoditylist = commoditylist.objects.all().select_related('com')
     qs = mycommoditylist\
-        .annotate(prev_csp=Window(expression=Lag('cu_csp'), partition_by=F("com_id"), order_by=F('date').asc(),))\
-        .annotate(diff_csp=F('cu_csp')-F('prev_csp'))\
-        .annotate(per_chan_csp=Round(F('diff_csp')/F('prev_csp')*100, 2))\
+        .annotate(prev_csp=Window(expression=Lag('cu_csp'), partition_by=F("com_id"), order_by=F('date').asc()),
+        diff_csp=F('cu_csp')-F('prev_csp'),
+        per_chan_csp=Round(F('diff_csp')/F('prev_csp')*100, 2))\
         .order_by('-date')
+    return qs
+
+
+def yearlyhighlow(days=365):
+    date = dateFilter(days)
+   
+    qs=StockPrice.objects.all().select_related('stock')\
+    .annotate(maxlow=Window(expression=Min('low'), partition_by=F("stock_id"), order_by=F('date').asc()),
+    maxhigh=Window(expression=Max('high'), partition_by=F("stock_id"), order_by=F('date').asc())
+    )\
+    .filter(date__gte=date).order_by('-date')[:506]
     return qs

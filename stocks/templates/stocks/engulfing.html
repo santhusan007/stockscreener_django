@@ -3,50 +3,157 @@
 
 {% block content %}
 
+<style>
+  table {
+    border-collapse: separate;
+    border-spacing: .2em;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  td {
+
+    text-align: center;
+    border-radius: 8px;
+    width: 120px;
+    margin: 2px;
+    text-align: center;
+    line-height: 20px;
+    font-size: 13px;
+    border-radius: 8px;
+    color: black;
+
+  }
+
+  .newFont{
+    color: aliceblue;
+  }
+</style>
+
+
 <h2><b>Bearish</b></h2>
 
-{% for stock in bearish  %}
 
-{% if stock.engulf is not None %}
-<a href="{% url 'stocks:stock-detail' stock.stock.symbol %}" target="_blank">{{stock.stock.symbol}}</a>
-
- 
- <br>
+<table>
   
+  {% for stock in bearish %}
+  {% if stock.engulf is not None %}
+  <tbody>
+    <tr>
+     
+      
+      <td class="newFont" style="background-color: #ed0909;">
+        <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}">
+          <b>{{stock.stock.symbol}}</a></b><br>
+        <b>{{stock.close}}</b><br>
+        vol_ch: <b>{{stock.vol_change}}%</b><br>
+        <b>{{stock.per_chan}}%</b><br>
+      </td>
+ </tr>
+  {% endif %}
+  {% endfor %}
+  </tbody>
+</table>
 
-{% endif %}
-{% endfor %}
 
-<h2><b>Bullish </b></h2>
+<h2><b>Bullish</b></h2>
 
-{% for stock in bullish  %}
 
-{% if stock.engulf is not None %}
-<a href="{% url 'stocks:stock-detail' stock.stock.symbol %}" target="_blank">{{stock.stock.symbol}}</a>
+<table>
 
- 
- <br>
-  
-
-{% endif %}
-{% endfor %}
+  {% for stock in bullish %}
+  {% if stock.engulf is not None %}
+  <tbody>
+    <tr>
+      
+      
+      <td class="newFont" style="background-color: #5f9e08;">
+        <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}">
+          <b>{{stock.stock.symbol}}</a></b><br>
+        <b>{{stock.close}}</b><br>
+        vol_ch: <b>{{stock.vol_change}}%</b><br>
+        <b>{{stock.per_chan}}%</b><br>
+      </td>
+ </tr>
+  {% endif %}
+  {% endfor %}
+  </tbody>
+</table>
 
 <h2><b>VolBUzzers</b></h2>
 
-{% for stock in vol  %}
+<table>
 
-{% if stock.vol is not None %}
-<a href="{% url 'stocks:stock-detail' stock.stock.symbol %}" target="_blank">{{stock.stock.symbol}}</a>
-{{stock.vol_change}}
+  {% for stock in vol %}
+  {% if stock.vol is not None %}
+  <tbody>
+    <tr>
+      
+      
+      <td class="newFont" style="background-color: #5f9e08;">
+        <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}">
+          <b>{{stock.stock.symbol}}</a></b><br>
+        <b>{{stock.close}}</b><br>
+      vol_ch: <b>{{stock.vol_change}}%</b><br>
+        <b>{{stock.per_chan}}%</b><br>
+      </td>
+ </tr>
+  {% endif %}
+  {% endfor %}
+  </tbody>
 
- 
- <br>
+</table>
+
+    <h2><b>52week low</b></h2>
+    <table>
+
+      {% for stock in yearhighlow %}
+      {% if stock.low == stock.maxlow  %}
+      <tbody>
+        <tr>
+          
+          
+          <td class="newFont" style="background-color: #ed0909;">
+            <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}">
+              <b>{{stock.stock.symbol}}</a></b><br>
+            <b>{{stock.close}}</b><br>
+            <!--<b>{{stock.prev_close}}</b><br>-->
+            <!-- <b>{{stock.per_chan}}%</b><br> -->
+          </td>
+     </tr>
+     
+      {% endif %}
+      {% endfor %}
+      </tbody>
+
+    
+  </table>
   
+    
+ 
+    <h2><b>52Week High</b></h2>
+    <table>
 
-{% endif %}
-{% endfor %}
-
-
+      {% for stock in yearhighlow %}
+      {% if stock.high == stock.maxhigh %}
+      <tbody>
+        <tr>
+          
+          
+          <td class="newFont" style="background-color: #5f9e08;">
+            <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}">
+              <b>{{stock.stock.symbol}}</a></b><br>
+            <b>{{stock.close}}</b><br>
+            <!--<b>{{stock.prev_close}}</b><br>-->
+            <!-- <b>{{stock.per_chan}}%</b><br> -->
+          </td>
+     </tr>
+      {% endif %}
+      {% endfor %}
+      </tbody>
+    
+</table>
+        
 
 {% endblock %}
 

@@ -5,7 +5,8 @@ from .import views
 app_name = 'stocks'
 
 urlpatterns = [
-    path('', views.StockListView, name='stock-list'),
+     path('',views.visualTableu , name='tableu'), 
+    path('stocks/stocks', views.StockListView, name='stock-list'),
     path('stocks/index_sector', views.index_sector, name='index-sector'),
     path('stocks/scanner/', views.stock_scanner, name='stock-scanner'),
     path('stocks/engulfing',views.engulfing,name='engulfing'),

@@ -41,19 +41,18 @@ class SectorialIndex(models.Model):
         db_table = 'sectorial_index'
 
 class Stocks(models.Model):
-    id = models.IntegerField(primary_key=True)
-    symbol = models.CharField(unique=True, max_length=100)
-    company = models.CharField(max_length=200)
-    sector = models.ForeignKey(
-        Sector, models.DO_NOTHING, blank=True, null=True)
-    broder = models.ForeignKey(
-        BroaderIndex, models.DO_NOTHING, blank=True, null=True)
-    sectorial_index = models.ForeignKey(
-        SectorialIndex, models.DO_NOTHING, db_column='sectorial_index', blank=True, null=True)
+    symbol = models.CharField(unique=True, max_length=250)
+    company = models.CharField(max_length=250)
+    sector = models.ForeignKey(Sector, models.DO_NOTHING, blank=True, null=True)
+    broder = models.ForeignKey(BroaderIndex, models.DO_NOTHING, blank=True, null=True)
+    sectorial_index = models.ForeignKey(SectorialIndex, models.DO_NOTHING, db_column='sectorial_index', blank=True, null=True)
     fo = models.IntegerField(blank=True, null=True)
+    shares = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
+    iwf = models.FloatField(blank=True, null=True)
 
-    def __str__(self):
-        return self.symbol
+    class Meta:
+        managed = False
+        db_table = 'stocks'
 
     class Meta:
         managed = False

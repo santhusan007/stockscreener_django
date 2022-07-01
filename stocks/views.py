@@ -13,7 +13,7 @@ import quantstats as qs
 from .helper import (perodical_index, perodical_sector,present_day, prev_day,
                      index_sector_price, mainpage_dropdown,
                      mainpage_details,perodical_mainsector,bearishEngulf,bullishEngulf,
-                     volumebuzzers,fostocks,currencylist,copperdetail)
+                     volumebuzzers,fostocks,currencylist,copperdetail,yearlyhighlow)
 
 qs.extend_pandas()
 
@@ -24,6 +24,7 @@ last_day = prev_day(latest_day)
 def StockListView(request):
     form = StockOptionForm(request.POST or None)
     options = request.POST.get("options")
+    dates=request.POST.get("dateselection")
     # print(form)
     
     if options :
@@ -289,7 +290,7 @@ def engulfing(request):
     # bearish=bearishEngulf()
     # bullish=bullishEngulf()
     # volbuz=volumebuzzers()
-    context={"bearish":bearishEngulf,"bullish":bullishEngulf,"vol":volumebuzzers}
+    context={"bearish":bearishEngulf,"bullish":bullishEngulf,"vol":volumebuzzers,'yearhighlow':yearlyhighlow}
     return render(request,"stocks/engulfing.html",context)
 
 def fnostocks(request):
@@ -358,3 +359,6 @@ def copper_detail(request):
     context={"copperlist":copperlist,"page_obj":page_obj,"latest_day":latest_day}
     return render(request, 'stocks/copper_detail.html', context)
 
+def visualTableu(request):
+
+    return render(request, 'stocks/visual.html')
