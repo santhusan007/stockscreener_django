@@ -54,9 +54,7 @@ class Stocks(models.Model):
         managed = False
         db_table = 'stocks'
 
-    class Meta:
-        managed = False
-        db_table = 'stocks'
+    
 
 
 class Commodities(models.Model):

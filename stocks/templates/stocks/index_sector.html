@@ -2,24 +2,9 @@
 {% load tailwind_filters %}
 
 {% block content %}
+{% include "stocks/customcss.html" %}
 
 <style>
-    h1 {
-    
-      font-size: 30px;
-    }
-    
-      table {
-        border-collapse: separate;
-        border-spacing: .2em;
-        display: flex;
-        flex-wrap: wrap;
-      }
-      tr{
-        display: block;
-      }
-
-      tr:hover { box-shadow: 0px 2px 18px 0px rgba(0,0,0,0.5); cursor: pointer; }
 
 
       td {
@@ -32,13 +17,11 @@
         line-height: 20px;
         font-size: 13px;
         border-radius: 25px;
-        
-        
+        color: black;
+
+          
+      }
     
-      }
-      .newFont{
-        color: aliceblue;
-      }
     
     </style>
     
@@ -53,171 +36,64 @@
     <table>
       
       {% for stock in indexprice %}
+      {% if stock.per_chan %}
       <tbody>
         <tr>
-      {% if stock.per_chan < -4 %} 
-      
-        
-          <td class="newFont" style="background-color: #FF0000 ; ">
-            <a  href="{% url 'stocks:index-price' stock.broader.indices %}"><b>{{stock.broader.indices}}</a></b><br>
+          <td class="newFont {% if stock.per_chan < -4 %}negfour
+       {% elif stock.per_chan < -3 %}negthree
+        {% elif stock.per_chan < -2 %}negtwo
+         {% elif stock.per_chan < -1 %}negone
+        {% elif stock.per_chan < 0 %}lesszero
+        {% elif stock.per_chan > 4 %}posfour
+        {% elif stock.per_chan > 3 %}posthree
+        {% elif stock.per_chan > 2 %}postwo
+        {% elif stock.per_chan > 1 %}posone
+        {% elif stock.per_chan > 0 %}grtzero
+        {% elif stock.per_chan == 0 %}eqzero
+        {% endif %}" >      
+
+        <a  href="{% url 'stocks:index-price' stock.broader.indices %}"><b>{{stock.broader.indices}}</a></b><br>
             <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
           </td>
+        </tr>
+        {% endif %}
+    
+        {% endfor %}
+    
+        </tbody>
+        
+        {% for stock in sectorprice %}
+        {% if stock.per_chan %}
+        
+      <tbody>
+        
+        <tr>
+          <td class="newFont {% if stock.per_chan < -4 %}negfour
+          {% elif stock.per_chan < -3 %}negthree
+           {% elif stock.per_chan < -2 %}negtwo
+            {% elif stock.per_chan < -1 %}negone
+           {% elif stock.per_chan < 0 %}lesszero
+           {% elif stock.per_chan > 4 %}posfour
+           {% elif stock.per_chan > 3 %}posthree
+           {% elif stock.per_chan > 2 %}postwo
+           {% elif stock.per_chan > 1 %}posone
+           {% elif stock.per_chan > 0 %}grtzero
+           {% elif stock.per_chan == 0 %}eqzero
+           {% endif %}" >
+    
     
           
-          {% elif stock.per_chan < -3 %} <td class="newFont" style="background-color: #FF6400;">
-            <a href="{% url 'stocks:index-price' stock.broader.indices %}"><b>{{stock.broader.indices}}</a></b><br>
+            <a href="{% url 'stocks:sector-price' stock.sectorial.sector %}">
+              <b>{{stock.sectorial.sector}}</a></b><br>
             <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br></td>
-    
-            {% elif stock.per_chan < -2 %} <td style="background-color: #FF9664;;">
-              <a href="{% url 'stocks:index-price' stock.broader.indices %}"><b>{{stock.broader.indices}}</a></b><br>
-              <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br></td>
-    
-              {% elif stock.per_chan < -1 %} <td style="background-color:  #FFC896;">
-                <a href="{% url 'stocks:index-price' stock.broader.indices %}"><b>{{stock.broader.indices}}</a></b><br>
-                <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br></td>
-    
-                {% elif stock.per_chan < 0 %} <td style="background-color: #FFE1AF;;">
-                  <a href="{% url 'stocks:index-price' stock.broader.indices %}"><b>{{stock.broader.indices}}</a></b><br>
-                  <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br></td>
-    
-                  {% elif stock.per_chan > 4 %}
-    
-                  <td class="newFont" style="background-color: #385724;;">
-                    <a href="{% url 'stocks:index-price' stock.broader.indices %}"><b>{{stock.broader.indices}}</a></b><br>
-                    <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
-                  </td>
-    
-                  {% elif stock.per_chan > 3 %}
-    
-                  <td class="newFont" style="background-color: #548235;">
-                    <a href="{% url 'stocks:index-price' stock.broader.indices %}"><b>{{stock.broader.indices}}</a></b><br>
-                    <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
-                  </td>
-    
-                  {% elif stock.per_chan > 2 %}
-    
-                  <td style="background-color: #A9D18E;;">
-                    <a href="{% url 'stocks:index-price' stock.broader.indices %}"><b>{{stock.broader.indices}}</a></b><br>
-                    <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
-                  </td>
-    
-                  {% elif stock.per_chan > 1 %}
-    
-                  <td style="background-color: #C5E0B4;;">
-                    <a href="{% url 'stocks:index-price' stock.broader.indices %}"><b>{{stock.broader.indices}}</a></b><br>
-                    <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
-                  </td>
-    
-                  {% elif stock.per_chan > 0 %}
-    
-                  <td style="background-color: #E2F0D9;;">
-                    <a href="{% url 'stocks:index-price' stock.broader.indices %}"><b>{{stock.broader.indices}}</a></b><br>
-                    <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
-                  </td>
-    
-                  {% elif stock.per_chan == 0 %}
-    
-                  <td style="background-color: #E2F0D9;;">
-                    <a href="{% url 'stocks:index-price' stock.broader.indices %}"><b>{{stock.broader.indices}}</a></b><br>
-                    <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
-                  </td>
         </tr>
-    
         {% endif %}
-    
     
         {% endfor %}
     
-        </tbody>
-        
-
-        {% for stock in sectorprice %}
-        
-      <tbody>
-        
-        <tr>
-      {% if stock.per_chan < -4 %} 
-      
-        
-          <td class="newFont" style="background-color: #FF0000 ; ">
-            <a  href="{% url 'stocks:sector-price' stock.sectorial.sector %}"><b>{{stock.sectorial.sector}}</a></b><br>
-            <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
-          </td>
-    
-    
-          {% elif stock.per_chan < -3 %} <td class="newFont" style="background-color: #FF6400;">
-            <a href="{% url 'stocks:sector-price' stock.sectorial.sector %}"><b>{{stock.sectorial.sector}}</a></b><br>
-            <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br></td>
-    
-            {% elif stock.per_chan < -2 %} <td style="background-color: #FF9664;;">
-              <a href="{% url 'stocks:sector-price' stock.sectorial.sector %}"><b>{{stock.sectorial.sector}}</a></b><br>
-              <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br></td>
-    
-              {% elif stock.per_chan < -1 %} <td style="background-color:  #FFC896;">
-                <a href="{% url 'stocks:sector-price' stock.sectorial.sector %}"><b>{{stock.sectorial.sector}}</a></b><br>
-                <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br></td>
-    
-                {% elif stock.per_chan < 0 %} <td style="background-color: #FFE1AF;;">
-                  <a href="{% url 'stocks:sector-price' stock.sectorial.sector %}"><b>{{stock.sectorial.sector}}</a></b><br>
-                  <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br></td>
-    
-                  {% elif stock.per_chan > 4 %}
-    
-                  <td class="newFont" style="background-color: #385724;;">
-                    <a href="{% url 'stocks:sector-price' stock.sectorial.sector %}"><b>{{stock.sectorial.sector}}</a></b><br>
-                    <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
-                  </td>
-    
-                  {% elif stock.per_chan > 3 %}
-    
-                  <td class="newFont" style="background-color: #548235;">
-                    <a href="{% url 'stocks:sector-price' stock.sectorial.sector %}"><b>{{stock.sectorial.sector}}</a></b><br>
-                    <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
-                  </td>
-    
-                  {% elif stock.per_chan > 2 %}
-    
-                  <td style="background-color: #A9D18E;;">
-                    <a href="{% url 'stocks:sector-price' stock.sectorial.sector %}"><b>{{stock.sectorial.sector}}</a></b><br>
-                    <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
-                  </td>
-    
-                  {% elif stock.per_chan > 1 %}
-    
-                  <td style="background-color: #C5E0B4;;">
-                    <a href="{% url 'stocks:sector-price' stock.sectorial.sector %}"><b>{{stock.sectorial.sector}}</a></b><br>
-                    <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
-                  </td>
-    
-                  {% elif stock.per_chan > 0 %}
-    
-                  <td style="background-color: #E2F0D9;;">
-                    <a href="{% url 'stocks:sector-price' stock.sectorial.sector %}"><b>{{stock.sectorial.sector}}</a></b><br>
-                    <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
-                  </td>
-    
-                  {% elif stock.per_chan == 0 %}
-    
-                  <td style="background-color: #E2F0D9;;">
-                    <a href="{% url 'stocks:sector-price' stock.sectorial.sector %}"><b>{{stock.sectorial.sector}}</a></b><br>
-                    <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
-                  </td>
-        </tr>
-    
-        {% endif %}
-    
-    
-        {% endfor %}
-    
-        </tbody>
-
-        
-    
+        </tbody>      
+  
     
     </table>
-
-
-
-
 
 {% endblock %}    

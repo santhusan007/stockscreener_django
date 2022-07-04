@@ -112,10 +112,7 @@ def stock_scanner(request):
     symbol = []
 
     if options:
-        main_df = pd.read_sql_query("""SELECT stock_price.date,stock_price.stock_id , stocks.symbol,stocks.company,stock_price.open,stock_price.high,
-				stock_price.low,stock_price.close FROM stock_price JOIN stocks
-                ON stocks.id=stock_price.stock_id where date between (select (SELECT max(date) from stock_price) + INTERVAL '-10 day')
-                 and (SELECT max(date) from stock_price) """, connection)
+        main_df = pd.read_sql_query("""select * from stock_scanner """, connection)
 
         final_df = pd.DataFrame()
         # prefinal_df=pd.DataFrame()
