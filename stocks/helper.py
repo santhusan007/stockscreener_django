@@ -217,7 +217,7 @@ def volumebuzzers(days=1):
 def fostocks(stocklist, offset, days):
 
     fostocks = mystocklist(stocklist, offset, days)
-    qs = fostocks.filter(stock__fo=1).order_by('-date', '-per_chan')
+    qs = fostocks.filter(stock__fo=1).order_by('-date', '-per_chan')[:188]
     return qs
 
 

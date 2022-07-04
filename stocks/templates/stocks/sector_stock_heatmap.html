@@ -22,9 +22,6 @@
 <button type="submit" value="6month" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">6month </button>
 <button type="submit" value="1year" name="heatmap" class="w-40  float-none bg-blue-500 text-white hover:bg-blue-600 px-2 py-2 rounded-lg">1Year </button>
 </form>
-
-
-
 <table>
   
   {% for stock in stocksectorprice %}
@@ -42,9 +39,7 @@
         {% elif stock.per_chan > 1 %}posone
         {% elif stock.per_chan > 0 %}grtzero
         {% elif stock.per_chan == 0 %}eqzero
-        {% endif %}" >
-
-          
+        {% endif %}" >          
         <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}">
           <b>{{stock.stock.symbol}}</a></b><br>
         <b>{{stock.close}}</b><br>

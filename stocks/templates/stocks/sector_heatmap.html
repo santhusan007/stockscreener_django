@@ -45,7 +45,6 @@
         {% elif stock.per_chan > 0 %}grtzero
         {% elif stock.per_chan == 0 %}eqzero
         {% endif %}" >
-
           
         <a href="{% url 'stocks:stock-detail' stock.stock.symbol %}">
           <b>{{stock.stock.symbol}}</a></b><br>
@@ -53,10 +52,7 @@
         <!--<b>{{stock.prev_close}}</b><br>-->
         <b>{{stock.per_chan}}%</b><br>
       </td>
-
     </tr>
-
-
     {% endif %}
     {% endfor %}
 

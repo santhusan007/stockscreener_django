@@ -24,7 +24,7 @@ last_day = prev_day(latest_day)
 def StockListView(request):
     form = StockOptionForm(request.POST or None)
     options = request.POST.get("options")
-    dates=request.POST.get("dateselection")
+    #dates=request.POST.get("dateselection")
     # print(form)
     
     if options :
@@ -156,25 +156,18 @@ def stock_scanner(request):
 
 
 def heatmap_sector(request, sector):
-    # mysector=perodical_sector(SectorialIndex,Stocks,StockPrice,sector)
-    # context = {"stocksectorprice": mysector[2],
-    #            "sectorstock": mysector[1]}
+    heatmapdict= {"1day":perodical_mainsector(SectorialIndex, Stocks, sector, days=1, offset=1),
+                  "1week":perodical_mainsector(SectorialIndex, Stocks, sector, days=25, offset=6),
+                "1month":perodical_mainsector(SectorialIndex, Stocks, sector, days=40, offset=23),
+                "3month":perodical_mainsector(SectorialIndex, Stocks, sector, days=120, offset=68),
+                "6month":perodical_mainsector(SectorialIndex, Stocks, sector, days=240, offset=135),
+                "1year":perodical_mainsector(SectorialIndex, Stocks, sector, days=440, offset=260)                
+                    }
     
     if request.method=='POST':
         heatmap=request.POST.get("heatmap")
-        if heatmap=="1day":
-            mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=1, offset=1)
-        elif heatmap=="1week":
-            mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=25, offset=6)
-        elif heatmap=="1month":
-           mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=40, offset=23)
-        elif heatmap=="3month":
-           mysector = perodical_mainsector(SectorialIndex, Stocks, sector, days=120, offset=68)
-        elif heatmap=="6month":
-            mysector= perodical_mainsector(SectorialIndex, Stocks, sector, days=240, offset=135)
-        elif heatmap=="1year":
-            mysector =perodical_mainsector(SectorialIndex, Stocks, sector, days=440, offset=260)
-           
+        mysector=heatmapdict[heatmap]
+          
         context = {"stocksectorprice": mysector[2],
                 "sectorstock": mysector[1],"heatmap":heatmap}
         return render(request, 'stocks/sector_heatmap.html', context)
@@ -188,27 +181,21 @@ def heatmap_sector(request, sector):
 
 
 def heatmap_stocks(request, sector):
+    heatmapdict= {"1day":perodical_sector(Sector, Stocks, sector, days=1, offset=1),
+                  "1week":perodical_sector(Sector, Stocks, sector, days=25, offset=6),
+                "1month":perodical_sector(Sector, Stocks, sector, days=40, offset=23),
+                "3month":perodical_sector(Sector, Stocks, sector, days=120, offset=68),
+                "6month":perodical_sector(Sector, Stocks, sector, days=240, offset=135),
+                "1year":perodical_sector(Sector, Stocks, sector, days=420, offset=260)                
+                    }
     if request.method=='POST':
         heatmap=request.POST.get("heatmap")
         print(heatmap)
-        if heatmap=="1day":
-            mysector = perodical_sector(Sector, Stocks, sector, days=1, offset=1)
-        elif heatmap=="1week":
-            mysector = perodical_sector(Sector, Stocks, sector, days=25, offset=6)
-        elif heatmap=="1month":
-           mysector = perodical_sector(Sector, Stocks, sector, days=40, offset=23)
-        elif heatmap=="3month":
-           mysector = perodical_sector(Sector, Stocks, sector, days=120, offset=68)
-        elif heatmap=="6month":
-            mysector= perodical_sector(Sector, Stocks, sector, days=240, offset=135)
-        elif heatmap=="1year":
-            mysector =perodical_sector(Sector, Stocks, sector, days=420, offset=260)
+        mysector=heatmapdict[heatmap]           
            
         context = {"stocksectorprice": mysector[2],
                 "sectorstock": mysector[1],"heatmap":heatmap}
         return render(request, 'stocks/sector_stock_heatmap.html', context)
-
-
     else:
         mysector = perodical_sector(Sector, Stocks, sector, days=1, offset=1)
         context = {"stocksectorprice": mysector[2],
@@ -217,21 +204,17 @@ def heatmap_stocks(request, sector):
 
 
 def heatmap_index(request, indices):
+    heatmapdict= {"1day":perodical_index(BroaderIndex, Stocks, indices, days=1, offset=1),
+                  "1week":perodical_index(BroaderIndex, Stocks, indices, days=25, offset=6),
+                "1month":perodical_index(BroaderIndex, Stocks, indices, days=40, offset=23),
+                "3month":perodical_index(BroaderIndex, Stocks, indices, days=125, offset=68),
+                "6month":perodical_index(BroaderIndex, Stocks, indices, days=240, offset=135),
+                "1year":perodical_index(BroaderIndex, Stocks, indices, days=420, offset=260)                
+                    }
+
     if request.method=='POST':
         heatmap=request.POST.get("heatmap")
-        print(heatmap)
-        if heatmap=="1day":
-                myindex = perodical_index(BroaderIndex, Stocks, indices, days=1, offset=1)
-        elif heatmap=="1week":
-                myindex = perodical_index(BroaderIndex, Stocks, indices, days=25, offset=6)
-        elif heatmap=="1month":
-                myindex = perodical_index(BroaderIndex, Stocks, indices, days=40, offset=23)
-        elif heatmap=="3month":
-                myindex = perodical_index(BroaderIndex, Stocks, indices, days=125, offset=68)
-        elif heatmap=="6month":
-                myindex = perodical_index(BroaderIndex, Stocks, indices, days=240, offset=135)
-        elif heatmap=="1year":
-                myindex = perodical_index(BroaderIndex, Stocks, indices, days=420, offset=260)
+        myindex=heatmapdict[heatmap]
         context = {"stocksectorprice": myindex[2],
                "sectorstock": myindex[0], "indexcount": myindex[1],"heatmap":heatmap}
         return render(request, 'stocks/heatmap_index.html', context)
@@ -298,23 +281,16 @@ def fnostocks(request):
 
 
 def fnoheatmap(request):
- 
+    heatmapdict={"1day":fostocks(StockPrice,  days=1, offset=1),
+                        "1week":fostocks(StockPrice, days=25, offset=6),
+                        "1month":fostocks(StockPrice,days=40, offset=23),
+                        "3month":fostocks(StockPrice, days=120, offset=68),
+                        "6month":fostocks(StockPrice,days=240, offset=135),
+                        "1year":fostocks(StockPrice, days=420, offset=260)}
     if request.method=='POST':
         heatmap=request.POST.get("heatmap")
         print(heatmap)
-        if heatmap=="1day":
-            fo = fostocks(StockPrice,  days=1, offset=1)
-        elif heatmap=="1week":
-            fo = fostocks(StockPrice, days=25, offset=6)
-        elif heatmap=="1month":
-           fo = fostocks(StockPrice,days=40, offset=23)
-        elif heatmap=="3month":
-           fo = fostocks(StockPrice, days=120, offset=68)
-        elif heatmap=="6month":
-            fo= fostocks(StockPrice,days=240, offset=135)
-        elif heatmap=="1year":
-            fo =fostocks(StockPrice, days=420, offset=260)
-
+        fo=heatmapdict[heatmap]
         context={"fostocks":fo,"latest_day":present_day,"heatmap":heatmap}  
         return render(request,"stocks/foheatmap.html",context)       
     else:

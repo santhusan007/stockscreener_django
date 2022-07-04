@@ -50,18 +50,17 @@
         {% elif stock.per_chan > 1 %}posone
         {% elif stock.per_chan > 0 %}grtzero
         {% elif stock.per_chan == 0 %}eqzero
-        {% endif %}" >      
-
+        {% endif %}" >     
         <a  href="{% url 'stocks:index-price' stock.broader.indices %}"><b>{{stock.broader.indices}}</a></b><br>
             <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br>
           </td>
         </tr>
         {% endif %}
-    
+   
         {% endfor %}
     
         </tbody>
-        
+       
         {% for stock in sectorprice %}
         {% if stock.per_chan %}
         
@@ -80,9 +79,6 @@
            {% elif stock.per_chan > 0 %}grtzero
            {% elif stock.per_chan == 0 %}eqzero
            {% endif %}" >
-    
-    
-          
             <a href="{% url 'stocks:sector-price' stock.sectorial.sector %}">
               <b>{{stock.sectorial.sector}}</a></b><br>
             <b>{{stock.close}}</b><br><b>{{stock.per_chan}}%</b><br></td>

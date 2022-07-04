@@ -23,7 +23,7 @@ PATTERN_OPTIONS= ( (k,v) for k,v in candlestick_patterns.items() )
 class StockOptionForm(forms.Form):
    
     options=forms.ChoiceField(choices=QUERY_OPTIONS)
-    dateselection=forms.DateField(widget=forms.DateInput(attrs={'type':'date'}), required=False)
+    #dateselection=forms.DateField(widget=forms.DateInput(attrs={'type':'date'}), required=False)
 
 class StockSearchForm(forms.Form):
     date_from =forms.DateField(widget=forms.DateInput(attrs={'type':'date'}))
