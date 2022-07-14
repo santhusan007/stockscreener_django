@@ -31,7 +31,7 @@
 <br><br>
 <table>  
   {% for stock in stocksectorprice %}
-  {% if stock.per_chan %}
+  {% if stock.per_chan == 0 or stock.per_chan  %}
   <tbody>
     <tr>       
       <td class="newFont {% if stock.per_chan < -4 %}negfour
