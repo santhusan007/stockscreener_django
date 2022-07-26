@@ -22,3 +22,4 @@ urlpatterns = [
     path('' , include('stocks.urls'), name="stocks"),
     path('__debug__/', include('debug_toolbar.urls')),
 ]
+
