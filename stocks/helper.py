@@ -8,7 +8,7 @@ import pandas as pd
 from .models import BroaderIndex, StockPrice, Stocks, FoStatus, Currency, RbiExchange
 from datetime import timedelta
 from django.db.models.functions import Lag, Round
-from django.db.models import F, Window, Q, Max, Min, Count, Func, FloatField,ExpressionWrapper,Sum
+from django.db.models import F, Window, Q, Max, Min, Count, Func, FloatField, ExpressionWrapper, Sum
 from django.db.models import Case, Value, When
 
 
@@ -86,9 +86,11 @@ def mystocklist(stocks, offset, days):
                         "stock_id"), order_by=F('date').asc()),
                     diffvolume=F('volume')-F('prev_volume'), vol_change=Round(F('diffvolume')/F('prev_volume')*100, 2),
                     realbody=Func(F('open')-F('close'), function='ABS'), day_range=F('high')-F('low'),
-                    ff=ExpressionWrapper(F('close')*F('stock__iwf')*F('stock__shares'), output_field=FloatField()),
-                    totalff=Window(expression=Sum(ExpressionWrapper(F('close')*F('stock__iwf')*F('stock__shares'),output_field=FloatField()),partition_by=F("date"))),
-                    weight=Round(F('ff')/F('totalff'),5)
+                    ff=ExpressionWrapper(
+                        F('close')*F('stock__iwf')*F('stock__shares'), output_field=FloatField()),
+                    totalff=Window(expression=Sum(ExpressionWrapper(F('close')*F('stock__iwf')*F(
+                        'stock__shares'), output_field=FloatField()), partition_by=F("date"))),
+                    weight=Round(F('ff')/F('totalff'), 5)
                     )
           .filter(date__gte=date))
     return qs
